@@ -8,7 +8,7 @@ This project provides a robust solution for downloading daily trading statistics
 
 ## 🛠️ Key Components
 
-### 1. `index.py` (Main Script)
+### 1. `option.py` (Main Script)
 The core engine of the downloader. It performs the following tasks:
 - **Daily Stats**: Fetches daily trading statistics for Shanghai (SSE) and Shenzhen (SZSE) exchanges.
 - **Spot Prices**: Retrieves real-time spot prices for underlying indices (滬深300, 中證1000, 上證50) via Yahoo Finance.
@@ -16,13 +16,9 @@ The core engine of the downloader. It performs the following tasks:
 - **Data Integrity**: Includes retry logic, timeout handling, and checks to avoid redundant downloads.
 - **Organization**: Automatically saves data into `option_data/YYYYMMDD/` subdirectories with CSV files encoded in `utf-8-sig` for Excel compatibility.
 
-### 2. `test.py` (Verification)
-A minimal script used to verify that the `akshare` environment and basic API calls are working correctly.
-
-### 3. GitHub Action (`daily_fetch.yml`)
+### 2. GitHub Action (`daily_fetch.yml`)
 Located in `.github/workflows/`, this workflow automates the entire process:
-- **Schedule**: Runs daily at **15:30 Beijing Time** (07:30 UTC), shortly after the market close.
-- **Automation**: Installs dependencies, runs `index.py`, captures execution logs, and automatically commits new data back to the repository.
+Runs daily at **15:30 Beijing Time** (07:30 UTC), shortly after the market close.
 
 ## 📂 Data Structure
 ```text
@@ -33,13 +29,12 @@ option_data/
     └── [Symbol]_[Month]_YYYYMMDD.csv
 ```
 
-## 📜 License & Usage
+## 📜 Usage
+```bash
+python option.py # download all option data from A stock for today, may encounter rate limit
 
-© 2026. All Rights Reserved.
-
-- **Scripts**: The Python code (`index.py`, `test.py`) is licensed under **AGPL-3.0**.
-- **Data**: Data found in `option_data/` is sourced from public financial providers and is **not** covered by the AGPL license. Users must comply with the terms of the original data sources.
-
+python index.py # download all index data from A stock for today
+```
 ---
 > [!NOTE]  
 > This project is for educational and research purposes only. Always verify financial data before making investment decisions.
