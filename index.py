@@ -193,6 +193,14 @@ def fetch_and_save_options(symbol_list, spot_prices, iterations=3):
                         filename = f"{symbol}_{month}_{trade_date}.csv"
                         filepath = os.path.join(data_dir, filename)
                         
+                        # Split instrument (e.g., IO2603-C-4400) into ticker, type, and strike
+                        if "instrument" in df.columns:
+                            instrument_parts = df["instrument"].str.split("-", expand=True)
+                            if instrument_parts.shape[1] >= 3:
+                                df.insert(1, "ticker", instrument_parts[0])
+                                df.insert(2, "type", instrument_parts[1])
+                                df.insert(3, "strike", pd.to_numeric(instrument_parts[2], errors="coerce"))
+
                         # Add spot price column
                         if symbol in spot_prices:
                             df['spot_price'] = spot_prices[symbol]
