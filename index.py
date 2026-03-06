@@ -7,11 +7,6 @@ from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
 
 symbols = [
-    "华夏上证50ETF期权",
-    "华泰柏瑞沪深300ETF期权",
-    "南方中证500ETF期权",
-    "华夏科创50ETF期权",
-    "易方达科创50ETF期权",
     "沪深300股指期权",
     "中证1000股指期权",
     "上证50股指期权"
@@ -19,11 +14,6 @@ symbols = [
 
 # Mapping of option symbols to their underlying Yahoo Finance tickers
 underlying_map = {
-    "华夏上证50ETF期权": "510050.SS",
-    "华泰柏瑞沪深300ETF期权": "510300.SS",
-    "南方中证500ETF期权": "510500.SS",
-    "华夏科创50ETF期权": "588000.SS",
-    "易方达科创50ETF期权": "588080.SS",
     "沪深300股指期权": "000300.SS",
     "中证1000股指期权": "000852.SS",
     "上证50股指期权": "000016.SS"
@@ -62,6 +52,27 @@ def get_target_months():
             found += 1
     return target_months
 
+def get_spot_prices(underlying_map):
+    """Fetch current spot prices for given underlying tickers."""
+    spot_prices = {}
+    for opt_sym, ticker in underlying_map.items():
+        try:
+            print(f"Fetching spot price for {opt_sym} ({ticker})...")
+            df = yf.download(ticker, period="1d", progress=False)
+            if not df.empty:
+                if isinstance(df.columns, pd.MultiIndex):
+                    close_price = df['Close', ticker].iloc[-1]
+                else:
+                    close_price = df['Close'].iloc[-1]
+                spot_prices[opt_sym] = round(float(close_price), 3)
+                print(f"Fetched spot price: {spot_prices[opt_sym]}")
+            else:
+                print(f"No price data found for {ticker}")
+        except Exception as e:
+            print(f"Error fetching spot price for {ticker}: {e}")
+        time.sleep(1)
+    return spot_prices
+
 def fetch_and_save_daily_stats(date_str=None):
     """Fetch and save daily trading statistics for SSE and SZSE."""
     if date_str is None:
@@ -81,6 +92,7 @@ def fetch_and_save_daily_stats(date_str=None):
             print(f"Fetching Daily Stats for SSE: {date_str}")
             sse_df = ak.option_daily_stats_sse(date=date_str)
             if sse_df is not None and not sse_df.empty:
+                sse_df = sse_df.round(3)
                 sse_df.to_csv(sse_filepath, index=False, encoding="utf_8_sig")
                 print(f"Successfully saved to {sse_filepath}")
             else:
@@ -98,6 +110,7 @@ def fetch_and_save_daily_stats(date_str=None):
             print(f"Fetching Daily Stats for SZSE: {date_str}")
             szse_df = ak.option_daily_stats_szse(date=date_str)
             if szse_df is not None and not szse_df.empty:
+                szse_df = szse_df.round(3)
                 szse_df.to_csv(szse_filepath, index=False, encoding="utf_8_sig")
                 print(f"Successfully saved to {szse_filepath}")
             else:
@@ -109,7 +122,7 @@ def fetch_with_timeout(symbol, end_month):
     """Wrapper function to fetch option board for a single symbol and month."""
     return ak.option_finance_board(symbol=symbol, end_month=end_month)
 
-def fetch_and_save_options(symbol_list, iterations=3):
+def fetch_and_save_options(symbol_list, spot_prices, iterations=3):
     # Determine target months for all symbols
     target_months = get_target_months()
     print(f"Target expiration months: {target_months}")
@@ -159,12 +172,8 @@ def fetch_and_save_options(symbol_list, iterations=3):
                     df = future.result(timeout=10)
                     
                     if df is not None and not df.empty:
-                        # Extract trade date for folder structure
-                        if "日期" in df.columns:
-                            timestamp = str(df["日期"].iloc[0])
-                            trade_date = timestamp[:8]
-                        else:
-                            trade_date = current_trade_date
+
+                        trade_date = current_trade_date
                         
                         # Organize by date subdirectory
                         data_dir = os.path.join(output_base_dir, trade_date)
@@ -173,6 +182,13 @@ def fetch_and_save_options(symbol_list, iterations=3):
                         # Filename: {symbol}_{month}_{today}.csv
                         filename = f"{symbol}_{month}_{trade_date}.csv"
                         filepath = os.path.join(data_dir, filename)
+                        
+                        # Add spot price column
+                        if symbol in spot_prices:
+                            df['spot_price'] = spot_prices[symbol]
+                        
+                        # Round to 3 decimal places
+                        df = df.round(3)
                         
                         # Save to CSV using utf_8_sig
                         df.to_csv(filepath, index=False, encoding="utf_8_sig")
@@ -204,36 +220,8 @@ if __name__ == "__main__":
     # 1. Fetch and save daily stats for today
     fetch_and_save_daily_stats()
     
-    # 2. Fetch and save underlying spot prices using yfinance
-    spot_prices_file = os.path.join(output_dir, f"spot_prices_{today_str}.csv")
-    if os.path.exists(spot_prices_file):
-        print(f"Spot prices file already exists, skipping: {spot_prices_file}")
-    else:
-        print("Fetching underlying spot prices from yfinance...")
-        spot_data = []
-        for opt_sym, ticker in underlying_map.items():
-            try:
-                # Use yf.download to avoid issues with Ticker object
-                df = yf.download(ticker, period="1d", progress=False)
-                if not df.empty:
-                    # Index column extraction from Multi-Index DataFrame
-                    if isinstance(df.columns, pd.MultiIndex):
-                        close_price = df['Close', ticker].iloc[-1]
-                    else:
-                        close_price = df['Close'].iloc[-1]
-                    
-                    spot_data.append({"OptionSymbol": opt_sym, "UnderlyingTicker": ticker, "Close": close_price, "Date": today_str})
-                    print(f"Fetched spot price for {opt_sym} ({ticker}): {close_price}")
-                    time.sleep(1) # Extra gap to be safe
-                else:
-                    print(f"No price data found for {ticker}")
-            except Exception as e:
-                print(f"Error fetching spot price for {ticker}: {e}")
-        
-        if spot_data:
-            spot_df = pd.DataFrame(spot_data)
-            spot_df.to_csv(spot_prices_file, index=False, encoding="utf_8_sig")
-            print(f"Successfully saved spot prices to {spot_prices_file}")
+    # 2. Fetch current spot prices
+    spot_prices = get_spot_prices(underlying_map)
 
     # 3. Proceed with periodic board data fetching (now with multiple expiration months)
-    fetch_and_save_options(symbols, iterations=3)
+    fetch_and_save_options(symbols, spot_prices, iterations=3)

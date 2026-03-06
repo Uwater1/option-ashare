@@ -1,3 +1,4 @@
 akshare
 pytz
 yfinance
+pandas
