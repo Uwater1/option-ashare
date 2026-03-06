@@ -200,6 +200,7 @@ def fetch_and_save_options(symbol_list, spot_prices, iterations=3):
                                 df.insert(1, "ticker", instrument_parts[0])
                                 df.insert(2, "type", instrument_parts[1])
                                 df.insert(3, "strike", pd.to_numeric(instrument_parts[2], errors="coerce"))
+                                df.drop(columns=["instrument"], inplace=True)
 
                         # Add spot price column
                         if symbol in spot_prices:
