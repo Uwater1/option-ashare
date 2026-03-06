@@ -1,2 +1,3 @@
 akshare
 pytz
+yfinance
