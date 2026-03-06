@@ -86,7 +86,7 @@ def fetch_and_save_daily_stats(date_str=None, exchanges=['sse', 'szse']):
 
     # Shanghai Stock Exchange
     if 'sse' in exchanges:
-        sse_filename = f"daily_stats_sse_{date_str}.csv"
+        sse_filename = f"stats_sse_{date_str}.csv"
         sse_filepath = os.path.join(output_dir, sse_filename)
         if os.path.exists(sse_filepath):
             print(f"File already exists, skipping SSE download: {sse_filepath}")
@@ -107,7 +107,7 @@ def fetch_and_save_daily_stats(date_str=None, exchanges=['sse', 'szse']):
 
     # Shenzhen Stock Exchange
     if 'szse' in exchanges:
-        szse_filename = f"daily_stats_szse_{date_str}.csv"
+        szse_filename = f"stats_szse_{date_str}.csv"
         szse_filepath = os.path.join(output_dir, szse_filename)
         if os.path.exists(szse_filepath):
             print(f"File already exists, skipping SZSE download: {szse_filepath}")

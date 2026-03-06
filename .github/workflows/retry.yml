@@ -29,8 +29,8 @@ jobs:
           if [ -d "$DIR" ]; then
             COUNT=$(ls -1 "$DIR" | wc -l)
             echo "Current file count in $DIR: $COUNT"
-            if [ "$COUNT" -ge 13 ]; then
-              echo "Skip condition met (count >= 13). Setting skip=true."
+            if [ "$COUNT" -ge 14 ]; then
+              echo "Skip condition met (count >= 14). Setting skip=true."
               echo "skip=true" >> "$GITHUB_OUTPUT"
             else
               echo "skip=false" >> "$GITHUB_OUTPUT"
