@@ -1,0 +1,80 @@
+name: Chinese Options Download
+
+on:
+  schedule:
+    # Run at 22:30 Beijing Time (CST, UTC+8) is 14:30 UTC
+    - cron: '30 14 * * 1-5' 
+  
+  workflow_dispatch: # Allows manual trigger
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  download-options:
+    runs-on: ubuntu-slim
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Check file count
+        id: check_files
+        run: |
+          TODAY=$(date +'%Y%m%d')
+          DIR="option_data/$TODAY"
+          if [ -d "$DIR" ]; then
+            COUNT=$(ls -1 "$DIR" | wc -l)
+            echo "Current file count in $DIR: $COUNT"
+            if [ "$COUNT" -ge 13 ]; then
+              echo "Skip condition met (count >= 13). Setting skip=true."
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "skip=false" >> "$GITHUB_OUTPUT"
+            fi
+          else
+            echo "Directory $DIR does not exist. Setting skip=false."
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install dependencies
+        if: steps.check_files.outputs.skip != 'true'
+        run: pip install yfinance numpy akshare
+
+      - name: Run options download script
+        if: steps.check_files.outputs.skip != 'true'
+        id: download
+        run: |
+          # Run script and capture output to a log file
+          python index.py > /tmp/work_log.txt 2>&1
+          
+          # Print to console for real-time debugging
+          cat /tmp/work_log.txt
+          
+          # Save log to GITHUB_OUTPUT for the summary step
+          echo "log<<EOF" >> $GITHUB_OUTPUT
+          cat /tmp/work_log.txt >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Write work summary
+        if: steps.check_files.outputs.skip != 'true'
+        run: |
+          echo "## Options Download Summary" >> $GITHUB_STEP_SUMMARY
+          echo "Run completed on $(date +'%Y-%m-%d')" >> $GITHUB_STEP_SUMMARY
+          echo "### Execution Log" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY 
+          echo "${{ steps.download.outputs.log }}" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY 
+
+      - name: Commit and push options data
+        if: steps.check_files.outputs.skip != 'true'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add option_data/ 
+          
+          # Only commit if there are actually changes
+          git diff --staged --quiet || (git commit -m "Add options data for $(date +'%Y-%m-%d')" && git push)
