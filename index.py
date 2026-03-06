@@ -73,8 +73,8 @@ def get_spot_prices(underlying_map):
         time.sleep(1)
     return spot_prices
 
-def fetch_and_save_daily_stats(date_str=None):
-    """Fetch and save daily trading statistics for SSE and SZSE."""
+def fetch_and_save_daily_stats(date_str=None, exchanges=['sse', 'szse']):
+    """Fetch and save daily trading statistics for SSE and SZSE. Returns list of failed exchanges."""
     if date_str is None:
         date_str = datetime.now().strftime("%Y%m%d")
     
@@ -82,41 +82,51 @@ def fetch_and_save_daily_stats(date_str=None):
     output_dir = os.path.join("option_data", date_str)
     os.makedirs(output_dir, exist_ok=True)
     
+    failed_exchanges = []
+
     # Shanghai Stock Exchange
-    sse_filename = f"daily_stats_sse_{date_str}.csv"
-    sse_filepath = os.path.join(output_dir, sse_filename)
-    if os.path.exists(sse_filepath):
-        print(f"File already exists, skipping SSE download: {sse_filepath}")
-    else:
-        try:
-            print(f"Fetching Daily Stats for SSE: {date_str}")
-            sse_df = ak.option_daily_stats_sse(date=date_str)
-            if sse_df is not None and not sse_df.empty:
-                sse_df = sse_df.round(3)
-                sse_df.to_csv(sse_filepath, index=False, encoding="utf_8_sig")
-                print(f"Successfully saved to {sse_filepath}")
-            else:
-                print(f"No SSE daily stats data returned for {date_str}")
-        except Exception as e:
-            print(f"Error fetching SSE daily stats: {e}")
+    if 'sse' in exchanges:
+        sse_filename = f"daily_stats_sse_{date_str}.csv"
+        sse_filepath = os.path.join(output_dir, sse_filename)
+        if os.path.exists(sse_filepath):
+            print(f"File already exists, skipping SSE download: {sse_filepath}")
+        else:
+            try:
+                print(f"Fetching Daily Stats for SSE: {date_str}")
+                sse_df = ak.option_daily_stats_sse(date=date_str)
+                if sse_df is not None and not sse_df.empty:
+                    sse_df = sse_df.round(3)
+                    sse_df.to_csv(sse_filepath, index=False, encoding="utf_8_sig")
+                    print(f"Successfully saved to {sse_filepath}")
+                else:
+                    print(f"No SSE daily stats data returned for {date_str}")
+                    failed_exchanges.append('sse')
+            except Exception as e:
+                print(f"Error fetching SSE daily stats: {e}")
+                failed_exchanges.append('sse')
 
     # Shenzhen Stock Exchange
-    szse_filename = f"daily_stats_szse_{date_str}.csv"
-    szse_filepath = os.path.join(output_dir, szse_filename)
-    if os.path.exists(szse_filepath):
-        print(f"File already exists, skipping SZSE download: {szse_filepath}")
-    else:
-        try:
-            print(f"Fetching Daily Stats for SZSE: {date_str}")
-            szse_df = ak.option_daily_stats_szse(date=date_str)
-            if szse_df is not None and not szse_df.empty:
-                szse_df = szse_df.round(3)
-                szse_df.to_csv(szse_filepath, index=False, encoding="utf_8_sig")
-                print(f"Successfully saved to {szse_filepath}")
-            else:
-                print(f"No SZSE daily stats data returned for {date_str}")
-        except Exception as e:
-            print(f"Error fetching SZSE daily stats: {e}")
+    if 'szse' in exchanges:
+        szse_filename = f"daily_stats_szse_{date_str}.csv"
+        szse_filepath = os.path.join(output_dir, szse_filename)
+        if os.path.exists(szse_filepath):
+            print(f"File already exists, skipping SZSE download: {szse_filepath}")
+        else:
+            try:
+                print(f"Fetching Daily Stats for SZSE: {date_str}")
+                szse_df = ak.option_daily_stats_szse(date=date_str)
+                if szse_df is not None and not szse_df.empty:
+                    szse_df = szse_df.round(3)
+                    szse_df.to_csv(szse_filepath, index=False, encoding="utf_8_sig")
+                    print(f"Successfully saved to {szse_filepath}")
+                else:
+                    print(f"No SZSE daily stats data returned for {date_str}")
+                    failed_exchanges.append('szse')
+            except Exception as e:
+                print(f"Error fetching SZSE daily stats: {e}")
+                failed_exchanges.append('szse')
+
+    return failed_exchanges
 
 def fetch_with_timeout(symbol, end_month):
     """Wrapper function to fetch option board for a single symbol and month."""
@@ -218,10 +228,15 @@ if __name__ == "__main__":
     os.makedirs(output_dir, exist_ok=True)
 
     # 1. Fetch and save daily stats for today
-    fetch_and_save_daily_stats()
+    failed_daily_stats = fetch_and_save_daily_stats()
     
     # 2. Fetch current spot prices
     spot_prices = get_spot_prices(underlying_map)
 
     # 3. Proceed with periodic board data fetching (now with multiple expiration months)
     fetch_and_save_options(symbols, spot_prices, iterations=3)
+
+    # 4. Final retry for daily stats if any failed initially
+    if failed_daily_stats:
+        print(f"Retrying failed daily stats for: {failed_daily_stats}")
+        fetch_and_save_daily_stats(exchanges=failed_daily_stats)
