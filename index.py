@@ -224,7 +224,7 @@ def fetch_and_save_options(symbol_list, spot_prices, iterations=3):
 if __name__ == "__main__":
     # Get today's date for folder and file organization
     today_str = datetime.now().strftime("%Y%m%d")
-    output_dir = os.path.join("option_data", today_str)
+    output_dir = os.path.join("option_data_full", today_str)
     os.makedirs(output_dir, exist_ok=True)
 
     # 1. Fetch and save daily stats for today
