@@ -1,4 +1,4 @@
-name: Chinese Options Download
+name: Retry Download
 
 on:
   schedule:
