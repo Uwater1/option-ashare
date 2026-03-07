@@ -3,7 +3,7 @@ import time
 import os
 import yfinance as yf
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, date, timedelta
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
 
 symbols = [
@@ -25,9 +25,20 @@ def get_target_months():
     year = now.year
     month = now.month
     
+    # Check if current month's option has expired (after 4th Wednesday)
+    current_month_str = f"{year}{month:02d}"
+    expiry_date = get_expiry_date(current_month_str)
+    
+    # If today is after the expiry date, start from next month
+    if now.date() > expiry_date:
+        month += 1
+        if month > 12:
+            month = 1
+            year += 1
+            
     target_months = []
     
-    # 1. Current month
+    # 1. First available month
     target_months.append(f"{year}{month:02d}")
     
     # 2. Next month
@@ -51,6 +62,24 @@ def get_target_months():
             target_months.append(f"{curr_y}{curr_m:02d}")
             found += 1
     return target_months
+
+def get_expiry_date(month_str):
+    """Calculate the expiry date (4th Wednesday of the month)."""
+    # month_str is 'YYYYMM'
+    year = int(month_str[:4])
+    month = int(month_str[4:])
+    
+    # First day of the month
+    first_day = date(year, month, 1)
+    
+    # Find the first Wednesday (weekday 2)
+    # 0 = Monday, 1 = Tuesday, 2 = Wednesday, ..., 6 = Sunday
+    days_to_wed = (2 - first_day.weekday() + 7) % 7
+    first_wednesday = first_day + timedelta(days=days_to_wed)
+    
+    # Fourth Wednesday is 3 weeks after the first one
+    expiry_date = first_wednesday + timedelta(weeks=3)
+    return expiry_date
 
 def get_spot_prices(underlying_map):
     """Fetch current spot prices for given underlying tickers."""
@@ -205,6 +234,11 @@ def fetch_and_save_options(symbol_list, spot_prices, iterations=3):
                         # Add spot price column
                         if symbol in spot_prices:
                             df['spot_price'] = spot_prices[symbol]
+                        
+                        # Add days_to_expire column
+                        expiry_date = get_expiry_date(month)
+                        ref_date = datetime.strptime(trade_date, "%Y%m%d").date()
+                        df.insert(3, "days_to_expire", int((expiry_date - ref_date).days))
                         
                         # Round to 3 decimal places
                         df = df.round(3)
