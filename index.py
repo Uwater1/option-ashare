@@ -30,7 +30,7 @@ def get_target_months():
     expiry_date = get_expiry_date(current_month_str)
     
     # If today is after the expiry date, start from next month
-    if now.date() > expiry_date:
+    if now.date() >= expiry_date:
         month += 1
         if month > 12:
             month = 1

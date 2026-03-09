@@ -62,12 +62,12 @@ jobs:
       - name: Write work summary
         if: steps.check_files.outputs.skip != 'true'
         run: |
-          echo "## Options Download Summary" >> $GITHUB_STEP_SUMMARY
+          echo "Options Download Summary" >> $GITHUB_STEP_SUMMARY
           echo "Run completed on $(date +'%Y-%m-%d')" >> $GITHUB_STEP_SUMMARY
-          echo "### Execution Log" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY 
+          echo "Execution Log" >> $GITHUB_STEP_SUMMARY
+          echo '---' >> $GITHUB_STEP_SUMMARY 
           echo "${{ steps.download.outputs.log }}" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY 
+          echo '---' >> $GITHUB_STEP_SUMMARY 
 
       - name: Commit and push options data
         if: steps.check_files.outputs.skip != 'true'
