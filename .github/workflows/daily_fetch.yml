@@ -17,9 +17,12 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          sparse-checkout: |
+            index.py
+            requirements*.txt
 
       - name: Install dependencies
         run: pip install yfinance numpy akshare

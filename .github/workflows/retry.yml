@@ -17,9 +17,13 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          sparse-checkout: |
+            index.py
+            requirements*.txt
+            option_data/
       
       - name: Check file count
         id: check_files
