@@ -22,8 +22,8 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           sparse-checkout: |
             index.py
-            requirements*.txt
-            option_data/
+            requirements.txt
+            option_data
       
       - name: Check file count
         id: check_files

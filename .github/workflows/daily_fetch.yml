@@ -22,7 +22,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           sparse-checkout: |
             index.py
-            requirements*.txt
+            requirements.txt
 
       - name: Install dependencies
         run: pip install yfinance numpy akshare
