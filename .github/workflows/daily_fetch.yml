@@ -23,6 +23,7 @@ jobs:
           sparse-checkout: |
             index.py
             requirements.txt
+            option_data
 
       - name: Install dependencies
         run: pip install yfinance numpy akshare

@@ -192,6 +192,7 @@ def fetch_and_save_options(symbol_list, spot_prices, iterations=3):
                 
             print(f"--- Iteration {i+1} ---")
             print(f"Remaining tasks: {len(remaining_tasks)}")
+            time.sleep(i*2)
             
             successful_in_this_round = []
             for symbol, month in remaining_tasks:
@@ -258,7 +259,7 @@ def fetch_and_save_options(symbol_list, spot_prices, iterations=3):
                     print(f"Error processing {symbol} {month}: {e}")
                 
                 # Sleep between requests to avoid rate limiting
-                time.sleep(3)
+                time.sleep(1)
             
             # Remove successful tasks from the queue
             for task in successful_in_this_round:
