@@ -99,7 +99,6 @@ def get_spot_prices(underlying_map):
                 print(f"No price data found for {ticker}")
         except Exception as e:
             print(f"Error fetching spot price for {ticker}: {e}")
-        time.sleep(1)
     return spot_prices
 
 def fetch_and_save_daily_stats(date_str=None, exchanges=['sse', 'szse']):
