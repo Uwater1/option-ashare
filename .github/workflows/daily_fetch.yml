@@ -3,7 +3,7 @@ name: Chinese Options Download
 on:
   schedule:
     # Run at 15:30 Beijing Time (CST, UTC+8) is 07:30 UTC
-    - cron: '30 7 * * 1-5' 
+    - cron: '30 8 * * 1-5' 
   
   workflow_dispatch: # Allows manual trigger
 
