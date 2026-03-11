@@ -29,8 +29,8 @@ def get_target_months():
     current_month_str = f"{year}{month:02d}"
     expiry_date = get_expiry_date(current_month_str)
     
-    # If today is after the expiry date, start from next month
-    if now.date() >= expiry_date:
+    # If today is near or after the expiry date (3 days window), start from next month
+    if now.date() >= expiry_date - timedelta(days=3):
         month += 1
         if month > 12:
             month = 1
