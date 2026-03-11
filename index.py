@@ -269,7 +269,7 @@ if __name__ == "__main__":
     # Get today's date for folder and file organization
     today_str = datetime.now().strftime("%Y%m%d")
     output_dir = os.path.join("option_data_full", today_str)
-    print(f"Today is {today_str}, output to {output_dir}")
+    print(f"Today is {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}, output to {output_dir}")
     os.makedirs(output_dir, exist_ok=True)
 
     # 1. Fetch and save daily stats for today

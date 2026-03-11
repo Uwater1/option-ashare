@@ -33,6 +33,7 @@ jobs:
         run: |
           TODAY=$(date +'%Y%m%d')
           DIR="option_data/$TODAY"
+          echo "Today is $(date), output to $DIR"
           if [ -d "$DIR" ]; then
             COUNT=$(ls -1 "$DIR" | wc -l)
             echo "Current file count in $DIR: $COUNT"
