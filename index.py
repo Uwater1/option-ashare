@@ -64,7 +64,7 @@ def get_target_months():
     return target_months
 
 def get_expiry_date(month_str):
-    """Calculate the expiry date (4th Wednesday of the month)."""
+    """Calculate the expiry date (3rd Friday of the month)."""
     # month_str is 'YYYYMM'
     year = int(month_str[:4])
     month = int(month_str[4:])
@@ -72,13 +72,13 @@ def get_expiry_date(month_str):
     # First day of the month
     first_day = date(year, month, 1)
     
-    # Find the first Wednesday (weekday 2)
-    # 0 = Monday, 1 = Tuesday, 2 = Wednesday, ..., 6 = Sunday
-    days_to_wed = (2 - first_day.weekday() + 7) % 7
-    first_wednesday = first_day + timedelta(days=days_to_wed)
+    # Find the first Friday (weekday 4)
+    # 0 = Monday, 1 = Tuesday, 2 = Wednesday, 3 = Thursday, 4 = Friday, ..., 6 = Sunday
+    days_to_fri = (4 - first_day.weekday() + 7) % 7
+    first_friday = first_day + timedelta(days=days_to_fri)
     
-    # Fourth Wednesday is 3 weeks after the first one
-    expiry_date = first_wednesday + timedelta(weeks=3)
+    # Third Friday is 2 weeks after the first one
+    expiry_date = first_friday + timedelta(weeks=2)
     return expiry_date
 
 def get_spot_prices(underlying_map):

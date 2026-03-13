@@ -3,13 +3,13 @@ import pandas as pd
 from datetime import datetime, date, timedelta
 
 def get_expiry_date(month_str):
-    """Calculate the expiry date (4th Wednesday of the month)."""
+    """Calculate the expiry date (3rd Friday of the month)."""
     year = int(month_str[:4])
     month = int(month_str[4:])
     first_day = date(year, month, 1)
-    days_to_wed = (2 - first_day.weekday() + 7) % 7
-    first_wednesday = first_day + timedelta(days=days_to_wed)
-    expiry_date = first_wednesday + timedelta(weeks=3)
+    days_to_fri = (4 - first_day.weekday() + 7) % 7
+    first_friday = first_day + timedelta(days=days_to_fri)
+    expiry_date = first_friday + timedelta(weeks=2)
     return expiry_date
 
 def update_csv_files(target_dir):
@@ -30,7 +30,7 @@ def update_csv_files(target_dir):
     for filename in os.listdir(target_dir):
         # We only update the option board files, not the stats files
         # Option files look like: {symbol}_{month}_{date}.csv
-        if filename.endswith(".csv") and not filename.startswith("stats_"):
+        if filename.endswith(".csv") and not (filename.startswith("stats_") or filename.startswith("daily_stats_") or filename.startswith("spot_prices_")):
             filepath = os.path.join(target_dir, filename)
             
             # Extract expiration month from filename (format: symbol_month_date.csv)
@@ -67,5 +67,11 @@ def update_csv_files(target_dir):
                 print(f"Error processing {filename}: {e}")
 
 if __name__ == "__main__":
-    target_path = "/home/hallo/Documents/option-ashare/option_data/20260306"
-    update_csv_files(target_path)
+    base_data_dir = "/home/hallo/Documents/option-ashare/option_data"
+    if os.path.exists(base_data_dir):
+        for entry in os.listdir(base_data_dir):
+            target_path = os.path.join(base_data_dir, entry)
+            if os.path.isdir(target_path) and entry.isdigit(): # Only process yyyymmdd dirs
+                update_csv_files(target_path)
+    else:
+        print(f"Base data directory {base_data_dir} not found.")
