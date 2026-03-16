@@ -1,5 +1,6 @@
 import os
 import glob
+import math
 import pandas as pd
 import argparse
 from typing import List, Dict
@@ -49,10 +50,12 @@ def detect_put_call_parity(df: pd.DataFrame, results: List[Dict]):
         if call['bprice'] <= 0 or call['sprice'] <= 0 or put['bprice'] <= 0 or put['sprice'] <= 0: continue
         S = call['spot_price']
         K = strike
+        r = 0.02  # approximate Chinese short-term risk-free rate
+        K_pv = K * math.exp(-r * dte / 365.0)  # present value of strike (European options)
         margin = get_margin(S)
         # Conversion
         cost_conv = S + get_buy_price(put) - get_sell_price(call)
-        profit_conv = K - cost_conv
+        profit_conv = K_pv - cost_conv
         if profit_conv > 1.0: # Filter small noise
             ann_ret = calculate_annualized_return(profit_conv, margin, dte)
             if ann_ret >= MIN_ANNUALIZED_RETURN:
@@ -66,7 +69,7 @@ def detect_put_call_parity(df: pd.DataFrame, results: List[Dict]):
         # Reversal
         borrow_cost = S * BORROW_RATE * (dte / 365.0)
         cost_rev = S + get_sell_price(put) - get_buy_price(call)
-        profit_rev = (cost_rev - K) - borrow_cost
+        profit_rev = (cost_rev - K_pv) - borrow_cost
         if profit_rev > 1.0: # Filter small noise
             ann_ret = calculate_annualized_return(profit_rev, margin, dte)
             if ann_ret >= MIN_ANNUALIZED_RETURN:
@@ -158,14 +161,15 @@ def detect_vertical_spreads(df: pd.DataFrame, results: List[Dict]):
                     cost = sd1['C_buy'] - sd2['C_sell']  # C1_ask - C2_bid
                     if cost < 0:  # Monotonicity violation: low-strike call cheaper than high-strike
                         profit = abs(cost)
-                        ann_ret = calculate_annualized_return(profit, profit, dte)  # capital = credit received
+                        # Capital at risk = credit received (max you can lose back at expiry)
+                        ann_ret = calculate_annualized_return(profit, profit, dte)
                         if ann_ret >= MIN_ANNUALIZED_RETURN:
                             results.append({
                                 'Strategy': 'Call Monotonicity', 
                                 'Cost': round(cost, 2),
                                 'BorrowCost': 0,
                                 'Details': f"K1:{K1} K2:{K2} DTE:{dte} | BuyC@{sd1['C_buy']:.2f} SellC@{sd2['C_sell']:.2f} => Credit:{profit:.2f}", 
-                                'Profit': round(profit, 2), 'Margin': round(margin, 2), 'Ann. Return': ann_ret, 'underlying': und
+                                'Profit': round(profit, 2), 'Margin': round(profit, 2), 'Ann. Return': ann_ret, 'underlying': und
                             })
                 
                 # Bear Call: Sell K1, Buy K2. Credit = C1_sell - C2_buy. Profit = Credit - (K2 - K1)
@@ -198,7 +202,7 @@ def detect_vertical_spreads(df: pd.DataFrame, results: List[Dict]):
                                 'Profit': round(profit, 2), 'Margin': round(margin, 2), 'Ann. Return': ann_ret, 'underlying': und
                             })
 
-def detect_iron_condor_butterfly(df: pd.DataFrame, results: List[Dict]):
+def detect_butterfly_iron_condor(df: pd.DataFrame, results: List[Dict]):
     groups_by_und_dte = df.groupby(['underlying', 'days_to_expire'])
     for (und, dte), group in groups_by_und_dte:
         if dte <= 0: continue
@@ -217,6 +221,8 @@ def detect_iron_condor_butterfly(df: pd.DataFrame, results: List[Dict]):
                 if p['bprice'] > 0 and p['sprice'] > 0:
                     strike_data[K]['P_buy'] = get_buy_price(p); strike_data[K]['P_sell'] = get_sell_price(p); strike_data[K]['spot'] = p['spot_price']
         valid_strikes = sorted(strike_data.keys())
+
+        # --- Butterfly Arb (3 legs, symmetric) ---
         for i in range(len(valid_strikes)):
             for k in range(i+2, len(valid_strikes)):
                 K1 = valid_strikes[i]; K3 = valid_strikes[k]; K2 = (K1 + K3) / 2.0
@@ -250,6 +256,38 @@ def detect_iron_condor_butterfly(df: pd.DataFrame, results: List[Dict]):
                                     'Profit': round(profit, 2), 'Margin': round(margin, 2), 'Ann. Return': ann_ret, 'underlying': und
                                 })
 
+        # --- Iron Condor Arb (4 legs: K1 < K2 < K3 < K4) ---
+        # Buy put@K1, Sell put@K2, Sell call@K3, Buy call@K4
+        # Arb: net credit > max loss = min(K2-K1, K4-K3)
+        for i in range(len(valid_strikes)):
+            for j in range(i+1, len(valid_strikes)):
+                for k in range(j+1, len(valid_strikes)):
+                    for l in range(k+1, len(valid_strikes)):
+                        K1 = valid_strikes[i]; K2 = valid_strikes[j]
+                        K3 = valid_strikes[k]; K4 = valid_strikes[l]
+                        sd1 = strike_data[K1]; sd2 = strike_data[K2]
+                        sd3 = strike_data[K3]; sd4 = strike_data[K4]
+                        if not all(key in sd for sd, key in [
+                            (sd1, 'P_buy'), (sd2, 'P_sell'), (sd3, 'C_sell'), (sd4, 'C_buy')
+                        ]): continue
+                        S = sd1.get('spot', sd2.get('spot', sd3.get('spot', sd4.get('spot'))))
+                        if S is None: continue
+                        # Net credit received (positive = we receive money)
+                        credit = sd2['P_sell'] - sd1['P_buy'] + sd3['C_sell'] - sd4['C_buy']
+                        max_loss = min(K2 - K1, K4 - K3)
+                        profit = credit - max_loss
+                        if profit > 1.0:
+                            margin = get_margin(S)
+                            ann_ret = calculate_annualized_return(profit, margin, dte)
+                            if ann_ret >= MIN_ANNUALIZED_RETURN:
+                                results.append({
+                                    'Strategy': 'Iron Condor Arb',
+                                    'Cost': round(-credit, 2),
+                                    'BorrowCost': 0,
+                                    'Details': f"K:{K1},{K2},{K3},{K4} DTE:{dte} | Credit:{credit:.2f} MaxLoss:{max_loss}",
+                                    'Profit': round(profit, 2), 'Margin': round(margin, 2), 'Ann. Return': ann_ret, 'underlying': und
+                                })
+
 def detect_calendar_arbitrage(df: pd.DataFrame, results: List[Dict]):
     """
     Calendar (K) Arbitrage: Exploiting mispricing between different expiries for same strike.
@@ -272,7 +310,7 @@ def detect_calendar_arbitrage(df: pd.DataFrame, results: List[Dict]):
                     profit = near_sell - far_buy
                     # Capital = far_buy (cost of the long leg we must fund)
                     capital = far_buy if far_buy > 0 else 1.0
-                    ann_ret = calculate_annualized_return(profit, capital, int(far['days_to_expire']))
+                    ann_ret = calculate_annualized_return(profit, capital, int(near['days_to_expire']))
                     if ann_ret >= MIN_ANNUALIZED_RETURN:
                         results.append({
                             'Strategy': 'Calendar Arb', 
@@ -309,7 +347,7 @@ def main():
     detect_put_call_parity(df, results)
     detect_box_spreads(df, results)
     detect_vertical_spreads(df, results)
-    detect_iron_condor_butterfly(df, results)
+    detect_butterfly_iron_condor(df, results)
     detect_calendar_arbitrage(df, results) # Added K/Calendar Arb
 
     print(f"Detected {len(results)} arbitrage opportunities")
