@@ -6,7 +6,7 @@ import argparse
 from typing import List, Dict
 
 MIN_ANNUALIZED_RETURN = 0.05
-BORROW_RATE = 0.08 #Cost of borrowing stock
+BORROW_RATE = 0.8 #Cost of borrowing stock
 
 def calculate_annualized_return(profit: float, capital: float, days_to_expire: int) -> float:
     if capital <= 0:
@@ -285,7 +285,7 @@ def detect_butterfly_iron_condor(df: pd.DataFrame, results: List[Dict]):
                         if profit > 1.0:
                             margin = get_margin(S)
                             ann_ret = calculate_annualized_return(profit, margin, dte)
-                            if ann_ret >= 1000:
+                            if ann_ret >= 1000: # Disable this for now
                                 results.append({
                                     'Strategy': 'Iron Condor Arb',
                                     'Cost': round(-credit, 2),
