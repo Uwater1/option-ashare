@@ -5,6 +5,7 @@ import argparse
 from typing import List, Dict
 
 MIN_ANNUALIZED_RETURN = 0.05
+BORROW_RATE = 0.08 #Cost of borrowing stock
 
 def calculate_annualized_return(profit: float, capital: float, days_to_expire: int) -> float:
     if capital <= 0:
@@ -58,20 +59,23 @@ def detect_put_call_parity(df: pd.DataFrame, results: List[Dict]):
                 results.append({
                     'Strategy': 'Conversion', 
                     'Cost': round(cost_conv, 2),
-                    'Details': f"[{und}] K:{K} DTE:{dte} | BuyStock:{S:.1f} + BuyPut@{get_buy_price(put):.2f} - SellCall@{get_sell_price(call):.2f}", 
-                    'Profit': round(profit_conv, 2), 'Margin': round(margin, 2), 'Ann. Return': ann_ret
+                    'BorrowCost': 0,
+                    'Details': f"K:{K} DTE:{dte} | BuyStock:{S:.1f} + BuyPut@{get_buy_price(put):.2f} - SellCall@{get_sell_price(call):.2f}", 
+                    'Profit': round(profit_conv, 2), 'Margin': round(margin, 2), 'Ann. Return': ann_ret, 'underlying': und
                 })
         # Reversal
+        borrow_cost = S * BORROW_RATE * (dte / 365.0)
         cost_rev = S + get_sell_price(put) - get_buy_price(call)
-        profit_rev = cost_rev - K
+        profit_rev = (cost_rev - K) - borrow_cost
         if profit_rev > 1.0: # Filter small noise
             ann_ret = calculate_annualized_return(profit_rev, margin, dte)
             if ann_ret >= MIN_ANNUALIZED_RETURN:
                 results.append({
                     'Strategy': 'Reversal', 
                     'Cost': round(cost_rev, 2),
-                    'Details': f"[{und}] K:{K} DTE:{dte} | SellStock:{S:.1f} + SellPut@{get_sell_price(put):.2f} - BuyCall@{get_buy_price(call):.2f}", 
-                    'Profit': round(profit_rev, 2), 'Margin': round(margin, 2), 'Ann. Return': ann_ret
+                    'BorrowCost': round(borrow_cost, 2),
+                    'Details': f"K:{K} DTE:{dte} | SellStock:{S:.1f} + SellPut@{get_sell_price(put):.2f} - BuyCall@{get_buy_price(call):.2f}", 
+                    'Profit': round(profit_rev, 2), 'Margin': round(margin, 2), 'Ann. Return': ann_ret, 'underlying': und
                 })
 
 def detect_box_spreads(df: pd.DataFrame, results: List[Dict]):
@@ -103,8 +107,9 @@ def detect_box_spreads(df: pd.DataFrame, results: List[Dict]):
                         results.append({
                             'Strategy': 'Long Box', 
                             'Cost': round(debit, 2),
-                            'Details': f"[{und}] K1:{K1} K2:{K2} DTE:{dte} | C:{sd1['C_buy']:.1f}-{sd2['C_sell']:.1f} P:{sd2['P_buy']:.1f}-{sd1['P_sell']:.1f}", 
-                            'Profit': round(profit, 2), 'Margin': round(margin, 2), 'Ann. Return': ann_ret
+                            'BorrowCost': 0,
+                            'Details': f"K1:{K1} K2:{K2} DTE:{dte} | C:{sd1['C_buy']:.1f}-{sd2['C_sell']:.1f} P:{sd2['P_buy']:.1f}-{sd1['P_sell']:.1f}", 
+                            'Profit': round(profit, 2), 'Margin': round(margin, 2), 'Ann. Return': ann_ret, 'underlying': und
                         })
                 # Short Box
                 credit = sd1['C_sell'] - sd2['C_buy'] + sd2['P_sell'] - sd1['P_buy']
@@ -115,8 +120,9 @@ def detect_box_spreads(df: pd.DataFrame, results: List[Dict]):
                         results.append({
                             'Strategy': 'Short Box', 
                             'Cost': round(-credit, 2),
-                            'Details': f"[{und}] K1:{K1} K2:{K2} DTE:{dte} | Credit:{credit:.2f} StrikeWidth:{K2-K1}", 
-                            'Profit': round(profit, 2), 'Margin': round(margin, 2), 'Ann. Return': ann_ret
+                            'BorrowCost': 0,
+                            'Details': f"K1:{K1} K2:{K2} DTE:{dte} | Credit:{credit:.2f} StrikeWidth:{K2-K1}", 
+                            'Profit': round(profit, 2), 'Margin': round(margin, 2), 'Ann. Return': ann_ret, 'underlying': und
                         })
 
 def detect_vertical_spreads(df: pd.DataFrame, results: List[Dict]):
@@ -157,8 +163,9 @@ def detect_vertical_spreads(df: pd.DataFrame, results: List[Dict]):
                             results.append({
                                 'Strategy': 'Call Monotonicity', 
                                 'Cost': round(cost, 2),
-                                'Details': f"[{und}] K1:{K1} K2:{K2} DTE:{dte} | BuyC@{sd1['C_buy']:.2f} SellC@{sd2['C_sell']:.2f} => Credit:{profit:.2f}", 
-                                'Profit': round(profit, 2), 'Margin': round(margin, 2), 'Ann. Return': ann_ret
+                                'BorrowCost': 0,
+                                'Details': f"K1:{K1} K2:{K2} DTE:{dte} | BuyC@{sd1['C_buy']:.2f} SellC@{sd2['C_sell']:.2f} => Credit:{profit:.2f}", 
+                                'Profit': round(profit, 2), 'Margin': round(margin, 2), 'Ann. Return': ann_ret, 'underlying': und
                             })
                 
                 # Bear Call: Sell K1, Buy K2. Credit = C1_sell - C2_buy. Profit = Credit - (K2 - K1)
@@ -171,8 +178,9 @@ def detect_vertical_spreads(df: pd.DataFrame, results: List[Dict]):
                             results.append({
                                 'Strategy': 'Bear Call Arb', 
                                 'Cost': round(-credit, 2),
-                                'Details': f"[{und}] K1:{K1} K2:{K2} DTE:{dte} | Credit:{credit:.2f}", 
-                                'Profit': round(profit, 2), 'Margin': round(margin, 2), 'Ann. Return': ann_ret
+                                'BorrowCost': 0,
+                                'Details': f"K1:{K1} K2:{K2} DTE:{dte} | Credit:{credit:.2f}", 
+                                'Profit': round(profit, 2), 'Margin': round(margin, 2), 'Ann. Return': ann_ret, 'underlying': und
                             })
 
                 # Bull Put: Sell K2, Buy K1. Credit = P2_sell - P1_buy. Profit = Credit - (K2 - K1)
@@ -185,8 +193,9 @@ def detect_vertical_spreads(df: pd.DataFrame, results: List[Dict]):
                             results.append({
                                 'Strategy': 'Bull Put Arb', 
                                 'Cost': round(-credit, 2),
-                                'Details': f"[{und}] K1:{K1} K2:{K2} DTE:{dte} | Credit:{credit:.2f}", 
-                                'Profit': round(profit, 2), 'Margin': round(margin, 2), 'Ann. Return': ann_ret
+                                'BorrowCost': 0,
+                                'Details': f"K1:{K1} K2:{K2} DTE:{dte} | Credit:{credit:.2f}", 
+                                'Profit': round(profit, 2), 'Margin': round(margin, 2), 'Ann. Return': ann_ret, 'underlying': und
                             })
 
 def detect_iron_condor_butterfly(df: pd.DataFrame, results: List[Dict]):
@@ -224,8 +233,9 @@ def detect_iron_condor_butterfly(df: pd.DataFrame, results: List[Dict]):
                                 results.append({
                                     'Strategy': 'Call Butterfly Arb', 
                                     'Cost': round(cost, 2),
-                                    'Details': f"[{und}] K:{K1},{K2},{K3} DTE:{dte} | Credit:{abs(cost):.2f}", 
-                                    'Profit': round(profit, 2), 'Margin': round(margin, 2), 'Ann. Return': ann_ret
+                                    'BorrowCost': 0,
+                                    'Details': f"K:{K1},{K2},{K3} DTE:{dte} | Credit:{abs(cost):.2f}", 
+                                    'Profit': round(profit, 2), 'Margin': round(margin, 2), 'Ann. Return': ann_ret, 'underlying': und
                                 })
                     if 'P_buy' in sd1 and 'P_sell' in sd2 and 'P_buy' in sd3:
                         cost = sd1['P_buy'] - 2 * sd2['P_sell'] + sd3['P_buy']
@@ -235,8 +245,9 @@ def detect_iron_condor_butterfly(df: pd.DataFrame, results: List[Dict]):
                                 results.append({
                                     'Strategy': 'Put Butterfly Arb', 
                                     'Cost': round(cost, 2),
-                                    'Details': f"[{und}] K:{K1},{K2},{K3} DTE:{dte} | Credit:{abs(cost):.2f}", 
-                                    'Profit': round(profit, 2), 'Margin': round(margin, 2), 'Ann. Return': ann_ret
+                                    'BorrowCost': 0,
+                                    'Details': f"K:{K1},{K2},{K3} DTE:{dte} | Credit:{abs(cost):.2f}", 
+                                    'Profit': round(profit, 2), 'Margin': round(margin, 2), 'Ann. Return': ann_ret, 'underlying': und
                                 })
 
 def detect_calendar_arbitrage(df: pd.DataFrame, results: List[Dict]):
@@ -264,10 +275,11 @@ def detect_calendar_arbitrage(df: pd.DataFrame, results: List[Dict]):
                     ann_ret = calculate_annualized_return(profit, capital, int(far['days_to_expire']))
                     if ann_ret >= MIN_ANNUALIZED_RETURN:
                         results.append({
-                            'Strategy': 'Calendar (K) Arb', 
+                            'Strategy': 'Calendar Arb', 
                             'Cost': round(far_buy - near_sell, 2),
-                            'Details': f"[{und}] {otype} K:{strike} | SellNear(DTE:{near['days_to_expire']})@{near_sell:.2f} BuyFar(DTE:{far['days_to_expire']})@{far_buy:.2f}",
-                            'Profit': round(profit, 2), 'Margin': round(far_buy, 2), 'Ann. Return': ann_ret
+                            'BorrowCost': 0,
+                            'Details': f"{otype} K:{strike} | SellNear(DTE:{near['days_to_expire']})@{near_sell:.2f} BuyFar(DTE:{far['days_to_expire']})@{far_buy:.2f}",
+                            'Profit': round(profit, 2), 'Margin': round(far_buy, 2), 'Ann. Return': ann_ret, 'underlying': und
                         })
 
 def main():
@@ -300,22 +312,58 @@ def main():
     detect_iron_condor_butterfly(df, results)
     detect_calendar_arbitrage(df, results) # Added K/Calendar Arb
 
-    print(f"Detect {len(results)} arbitrage opportunity")
+    print(f"Detected {len(results)} arbitrage opportunities")
     if not results:
         print("No arbitrage opportunities found (Ann. Return >= 0.05).")
-    else:
-        results.sort(key=lambda x: x['Profit'], reverse=True)
-        header = ["Strategy", "Cost", "Profit", "Margin", "Ann. Return", "Details"]
-        col_widths = [18, 10, 10, 10, 15, 60]
+        return
+
+    # Group results by underlying
+    und_groups = {}
+    und_names = {
+        'HO': '上证50 (SSE50)',
+        'IO': '沪深300 (CSI300)',
+        'MO': '中证1000 (CSI1000)'
+    }
+    
+    for res in results:
+        und = res.get('underlying', 'Unknown')
+        if und not in und_groups:
+            und_groups[und] = []
+        und_groups[und].append(res)
+
+    all_unds = sorted(df['underlying'].unique())
+    for und in all_unds:
+        und_full_name = und_names.get(und, und)
+        
+        if und not in und_groups:
+            print(f"\n### {und_full_name}")
+            print("No arbitrage opportunities found (Ann. Return >= 5%).")
+            continue
+
+        group = und_groups[und]
+        group.sort(key=lambda x: x['Profit'], reverse=True)
+        
+        print(f"\n### {und_full_name} Arbitrage Opportunities (Ann. Return >= 5%, Sorted by Profit)")
+        
+        header = ["Strategy", "Cost", "Borrow", "Profit", "Margin", "Ann. Return", "Details"]
+        col_widths = [12, 8, 8, 8, 8, 11, 70]
+        
         def format_row(row):
             ann_ret_str = f"{row['Ann. Return']*100:.2f}%" if isinstance(row['Ann. Return'], float) else str(row['Ann. Return'])
-            data = [row['Strategy'], row.get('Cost', '-'), row['Profit'], row['Margin'], ann_ret_str, row['Details']]
+            data = [
+                row['Strategy'], 
+                row.get('Cost', '-'), 
+                row.get('BorrowCost', 0), 
+                row['Profit'], 
+                row['Margin'], 
+                ann_ret_str, 
+                row['Details']
+            ]
             return "| " + " | ".join(str(data[i]).ljust(col_widths[i]) for i in range(len(header))) + " |"
 
-        print("\n### Option Arbitrage Opportunities (Ann. Return >= 5%, Sorted by Profit)\n")
         print("| " + " | ".join(header[i].ljust(col_widths[i]) for i in range(len(header))) + " |")
         print("|-" + "-|-".join("-" * col_widths[i] for i in range(len(header))) + "-|")
-        for res in results:
+        for res in group:
             print(format_row(res))
 
 if __name__ == "__main__":
