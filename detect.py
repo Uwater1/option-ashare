@@ -284,12 +284,12 @@ def detect_butterfly_iron_condor(df: pd.DataFrame, results: List[Dict]):
                         if S is None: continue
                         # Net credit received (positive = we receive money)
                         credit = sd2['P_sell'] - sd1['P_buy'] + sd3['C_sell'] - sd4['C_buy']
-                        max_loss = min(K2 - K1, K4 - K3)
+                        max_loss = max(K2 - K1, K4 - K3)
                         profit = credit - max_loss
                         if profit > 1.0:
                             margin = get_margin(S)
                             ann_ret = calculate_annualized_return(profit, margin, dte)
-                            if ann_ret > MIN_ANNUALIZED_RETURN: # Disable this for now
+                            if ann_ret >= MIN_ANNUALIZED_RETURN: # Disable this for now
                                 results.append({
                                     'Strategy': 'Iron Condor Arb',
                                     'Cost': round(-credit, 2),
