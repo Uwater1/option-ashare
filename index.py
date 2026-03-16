@@ -19,6 +19,13 @@ underlying_map = {
     "上证50股指期权": "000016.SS"
 }
 
+# Mapping of option symbols to their CFFEX futures prefixes
+futures_prefix_map = {
+    "沪深300股指期权": "IF",
+    "中证1000股指期权": "IM",
+    "上证50股指期权": "IH"
+}
+
 def get_target_months():
     """Determine the 4 standard expiration months: current, next, and next 2 quarterly months."""
     now = datetime.now()
@@ -101,6 +108,20 @@ def get_spot_prices(underlying_map):
             print(f"Error fetching spot price for {ticker}: {e}")
     return spot_prices
 
+def get_futures_prices():
+    """Fetch current futures prices for CFFEX indices."""
+    try:
+        print("Fetching futures commission and price info from CFFEX...")
+        df = ak.futures_comm_info(symbol="中国金融期货交易所")
+        if df is not None and not df.empty:
+            # Map contract code (e.g., IF2603) to current price
+            prices = dict(zip(df['合约代码'], df['现价']))
+            return prices
+    except Exception as e:
+        print(f"Error fetching futures prices: {e}")
+    return {}
+
+
 def fetch_and_save_daily_stats(date_str=None, exchanges=['sse', 'szse']):
     """Fetch and save daily trading statistics for SSE and SZSE. Returns list of failed exchanges."""
     if date_str is None:
@@ -160,7 +181,7 @@ def fetch_with_timeout(symbol, end_month):
     """Wrapper function to fetch option board for a single symbol and month."""
     return ak.option_finance_board(symbol=symbol, end_month=end_month)
 
-def fetch_and_save_options(symbol_list, spot_prices, iterations=3):
+def fetch_and_save_options(symbol_list, spot_prices, futures_prices, iterations=3):
     # Determine target months for all symbols
     target_months = get_target_months()
     print(f"Target expiration months: {target_months}")
@@ -235,6 +256,13 @@ def fetch_and_save_options(symbol_list, spot_prices, iterations=3):
                         if symbol in spot_prices:
                             df['spot_price'] = spot_prices[symbol]
                         
+                        # Add futures price column
+                        prefix = futures_prefix_map.get(symbol)
+                        if prefix:
+                            futures_code = f"{prefix}{month[2:]}" # e.g., 202603 -> 2603
+                            if futures_code in futures_prices:
+                                df['future_price'] = futures_prices[futures_code]
+
                         # Add days_to_expire column
                         expiry_date = get_expiry_date(month)
                         ref_date = datetime.strptime(trade_date, "%Y%m%d").date()
@@ -277,8 +305,11 @@ if __name__ == "__main__":
     # 2. Fetch current spot prices
     spot_prices = get_spot_prices(underlying_map)
 
+    # 2.5 Fetch current futures prices
+    futures_prices = get_futures_prices()
+
     # 3. Proceed with periodic board data fetching (now with multiple expiration months)
-    fetch_and_save_options(symbols, spot_prices, iterations=3)
+    fetch_and_save_options(symbols, spot_prices, futures_prices, iterations=3)
 
     # 4. Final retry for daily stats if any failed initially
     if failed_daily_stats:
