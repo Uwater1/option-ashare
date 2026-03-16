@@ -109,20 +109,44 @@ def get_spot_prices(underlying_map):
             print(f"Error fetching spot price for {ticker}: {e}")
     return spot_prices
 
-def get_futures_prices():
-    """Fetch current futures prices for CFFEX indices."""
+def get_futures_fallback_prices():
+    """Fetch all current futures prices from CFFEX as a fallback source."""
     try:
-        print("Fetching futures commission and price info from CFFEX...")
+        print("Fetching fallback futures prices from CFFEX...")
         df = ak.futures_comm_info(symbol="中国金融期货交易所")
         if df is not None and not df.empty:
             # Map contract code (e.g., IF2603) to current price
-            # Ensure keys are stripped of whitespace for reliable matching
-            prices = {str(k).strip().upper(): v for k, v in zip(df['合约代码'], df['现价'])}
-            return prices
+            return {str(k).strip().upper(): v for k, v in zip(df['合约代码'], df['现价'])}
     except Exception as e:
-        print(f"Error fetching futures prices: {e}")
+        print(f"Error fetching fallback futures prices: {e}")
     return {}
 
+def get_single_future_price(symbol, month, fallback_prices=None):
+    """
+    Fetch current futures price for a specific contract.
+    Primary: Sina minute data (per test.py)
+    Fallback: CFFEX commission/price info
+    """
+    prefix = futures_prefix_map.get(symbol)
+    if not prefix:
+        return np.nan
+    
+    contract = f"{prefix}{month[2:]}".upper()
+    # 1. Try Sina (preferred source)
+    try:
+        # Using minute data to get the most recent price (period=1 or 60 as in test.py)
+        df = ak.futures_zh_minute_sina(symbol=contract, period="1")
+        if df is not None and not df.empty:
+            return round(float(df['close'].iloc[-1]), 3)
+    except Exception as e:
+        print(f"Error fetching futures price for {contract}: {e}")
+
+    # 2. Fallback to pre-fetched exchange data
+    if fallback_prices and contract in fallback_prices:
+        print(f"Using fallback price for {contract}: {fallback_prices[contract]}")
+        return fallback_prices[contract]
+        
+    return np.nan
 
 def fetch_and_save_daily_stats(date_str=None, exchanges=['sse', 'szse']):
     """Fetch and save daily trading statistics for SSE and SZSE. Returns list of failed exchanges."""
@@ -183,7 +207,7 @@ def fetch_with_timeout(symbol, end_month):
     """Wrapper function to fetch option board for a single symbol and month."""
     return ak.option_finance_board(symbol=symbol, end_month=end_month)
 
-def fetch_and_save_options(symbol_list, spot_prices, futures_prices, iterations=3, output_base_dir="option_data"):
+def fetch_and_save_options(symbol_list, spot_prices, fallback_prices, iterations=3, output_base_dir="option_data"):
     # Determine target months for all symbols
     target_months = get_target_months()
     print(f"Target expiration months: {target_months}")
@@ -256,11 +280,8 @@ def fetch_and_save_options(symbol_list, spot_prices, futures_prices, iterations=
                         # Always add spot_price and future_price columns (even if NaN)
                         df['spot_price'] = spot_prices.get(symbol, np.nan)
 
-                        prefix = futures_prefix_map.get(symbol)
-                        f_price = np.nan
-                        if prefix:
-                            futures_code = f"{prefix}{month[2:]}".upper()
-                            f_price = futures_prices.get(futures_code, np.nan)
+                        # Fetch future price using the Sina method with fallback
+                        f_price = get_single_future_price(symbol, month, fallback_prices)
                         df['future_price'] = f_price
 
                         # Add days_to_expire column
@@ -305,11 +326,11 @@ if __name__ == "__main__":
     # 2. Fetch current spot prices
     spot_prices = get_spot_prices(underlying_map)
 
-    # 2.5 Fetch current futures prices
-    futures_prices = get_futures_prices()
+    # 2.5 Fetch fallback futures prices
+    fallback_prices = get_futures_fallback_prices()
 
     # 3. Proceed with periodic board data fetching (now with multiple expiration months)
-    fetch_and_save_options(symbols, spot_prices, futures_prices, iterations=3, output_base_dir="option_data")
+    fetch_and_save_options(symbols, spot_prices, fallback_prices, iterations=3, output_base_dir="option_data")
 
     # 4. Final retry for daily stats if any failed initially
     if failed_daily_stats:

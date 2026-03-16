@@ -1,6 +1,30 @@
 import os
+import akshare as ak
+import numpy as np
 import pandas as pd
 from datetime import datetime, date, timedelta
+
+# Mapping of option symbols to their CFFEX futures prefixes
+futures_prefix_map = {
+    "沪深300股指期权": "IF",
+    "中证1000股指期权": "IM",
+    "上证50股指期权": "IH"
+}
+
+# Cache for historical futures data to avoid redundant API calls
+futures_cache = {} # Key: contract_code, Value: {date_str: price}
+
+def get_historical_future_price(symbol, month_str, trade_date_str):
+    prefix = futures_prefix_map.get(symbol)
+    if not prefix: return np.nan
+    contract = f"{prefix}{month_str[2:]}".upper()
+    if contract not in futures_cache:
+        try:
+            df = ak.futures_zh_daily_sina(symbol=contract)
+            df['date'] = pd.to_datetime(df['date']).dt.strftime("%Y%m%d")
+            futures_cache[contract] = dict(zip(df['date'], df['close']))
+        except: futures_cache[contract] = {}
+    return futures_cache[contract].get(trade_date_str, np.nan)
 
 def get_expiry_date(month_str):
     """Calculate the expiry date (3rd Friday of the month)."""
@@ -38,6 +62,7 @@ def update_csv_files(target_dir):
             if len(parts) < 2:
                 continue
                 
+            symbol = parts[0]
             month_str = parts[1] # e.g., 202603
             
             try:
@@ -51,6 +76,10 @@ def update_csv_files(target_dir):
                 # Remove days_to_expire if it already exists to avoid duplicates
                 if "days_to_expire" in df.columns:
                     df.drop(columns=["days_to_expire"], inplace=True)
+                
+                # Add or update future_price
+                f_price = get_historical_future_price(symbol, month_str, trade_date_str)
+                df['future_price'] = f_price
 
                 # Calculate days_to_expire
                 expiry_date = get_expiry_date(month_str)

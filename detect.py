@@ -36,9 +36,9 @@ def get_underlying(ticker: str) -> str:
     print(f"[WARNING] Unrecognised ticker prefix: '{ticker}' — grouped as '{fallback}'")
     return fallback
 
-def get_margin(spot_price, underlying='HO'):
+def get_margin(future_price, underlying='HO'):
     # Simple margin estimate: 10% of spot
-    return 0.1 * spot_price
+    return 0.1 * future_price
 
 def detect_put_call_parity(df: pd.DataFrame, results: List[Dict]):
     groups = df.groupby(['underlying', 'strike', 'days_to_expire'])
@@ -50,37 +50,41 @@ def detect_put_call_parity(df: pd.DataFrame, results: List[Dict]):
         call = calls.iloc[0]
         put = puts.iloc[0]
         if call['bprice'] <= 0 or call['sprice'] <= 0 or put['bprice'] <= 0 or put['sprice'] <= 0: continue
-        S = call['spot_price']
+        F = call['future_price']
         K = strike
         r = 0.02  # approximate Chinese short-term risk-free rate
-        K_pv = K * math.exp(-r * dte / 365.0)  # present value of strike (European options)
-        margin = get_margin(S)
-        # Conversion
-        cost_conv = S + get_buy_price(put) - get_sell_price(call)
-        profit_conv = K_pv - cost_conv
+        margin = get_margin(F)
+        
+        # Conversion: Long Future, Long Put, Short Call
+        premium_conv = get_buy_price(put) - get_sell_price(call)
+        profit_conv = (K - F) * math.exp(-r * dte / 365.0) - premium_conv
+        capital_conv = margin + max(0.0, premium_conv)
+        
         if profit_conv > 1.0: # Filter small noise
-            ann_ret = calculate_annualized_return(profit_conv, margin, dte)
+            ann_ret = calculate_annualized_return(profit_conv, capital_conv, dte)
             if ann_ret >= MIN_ANNUALIZED_RETURN:
                 results.append({
                     'Strategy': 'Conversion', 
-                    'Cost': round(cost_conv, 2),
+                    'Cost': round(premium_conv, 2),
                     'BorrowCost': 0,
-                    'Details': f"K:{K} DTE:{dte} | BuyStock:{S:.1f} + BuyPut@{get_buy_price(put):.2f} - SellCall@{get_sell_price(call):.2f}", 
-                    'Profit': round(profit_conv, 2), 'Margin': round(margin, 2), 'Ann. Return': ann_ret, 'underlying': und
+                    'Details': f"K:{K} DTE:{dte} | LongFuture:{F:.1f} + BuyPut@{get_buy_price(put):.2f} - SellCall@{get_sell_price(call):.2f}", 
+                    'Profit': round(profit_conv, 2), 'Margin': round(capital_conv, 2), 'Ann. Return': ann_ret, 'underlying': und
                 })
-        # Reversal
-        borrow_cost = S * BORROW_RATE * (dte / 365.0)
-        cost_rev = S + get_sell_price(put) - get_buy_price(call)
-        profit_rev = (cost_rev - K_pv) - borrow_cost
+                
+        # Reversal: Short Future, Short Put, Long Call
+        premium_rev = get_buy_price(call) - get_sell_price(put)
+        profit_rev = (F - K) * math.exp(-r * dte / 365.0) - premium_rev
+        capital_rev = margin + max(0.0, premium_rev)
+        
         if profit_rev > 1.0: # Filter small noise
-            ann_ret = calculate_annualized_return(profit_rev, margin, dte)
+            ann_ret = calculate_annualized_return(profit_rev, capital_rev, dte)
             if ann_ret >= MIN_ANNUALIZED_RETURN:
                 results.append({
                     'Strategy': 'Reversal', 
-                    'Cost': round(cost_rev, 2),
-                    'BorrowCost': round(borrow_cost, 2),
-                    'Details': f"K:{K} DTE:{dte} | SellStock:{S:.1f} + SellPut@{get_sell_price(put):.2f} - BuyCall@{get_buy_price(call):.2f}", 
-                    'Profit': round(profit_rev, 2), 'Margin': round(margin, 2), 'Ann. Return': ann_ret, 'underlying': und
+                    'Cost': round(premium_rev, 2),
+                    'BorrowCost': 0,
+                    'Details': f"K:{K} DTE:{dte} | ShortFuture:{F:.1f} + SellPut@{get_sell_price(put):.2f} - BuyCall@{get_buy_price(call):.2f}", 
+                    'Profit': round(profit_rev, 2), 'Margin': round(capital_rev, 2), 'Ann. Return': ann_ret, 'underlying': und
                 })
 
 def detect_box_spreads(df: pd.DataFrame, results: List[Dict]):
@@ -96,7 +100,7 @@ def detect_box_spreads(df: pd.DataFrame, results: List[Dict]):
             if not calls.empty and not puts.empty:
                 c = calls.iloc[0]; p = puts.iloc[0]
                 if c['bprice'] > 0 and c['sprice'] > 0 and p['bprice'] > 0 and p['sprice'] > 0:
-                    strike_data[K] = {'C_buy': get_buy_price(c), 'C_sell': get_sell_price(c), 'P_buy': get_buy_price(p), 'P_sell': get_sell_price(p), 'spot': c['spot_price']}
+                    strike_data[K] = {'C_buy': get_buy_price(c), 'C_sell': get_sell_price(c), 'P_buy': get_buy_price(p), 'P_sell': get_sell_price(p), 'spot': c['future_price']}
         valid_strikes = sorted(strike_data.keys())
         for i in range(len(valid_strikes)):
             for j in range(i+1, len(valid_strikes)):
@@ -143,11 +147,11 @@ def detect_vertical_spreads(df: pd.DataFrame, results: List[Dict]):
             if not calls.empty:
                 c = calls.iloc[0]
                 if c['bprice'] > 0 and c['sprice'] > 0:
-                    strike_data[K]['C_buy'] = get_buy_price(c); strike_data[K]['C_sell'] = get_sell_price(c); strike_data[K]['spot'] = c['spot_price']
+                    strike_data[K]['C_buy'] = get_buy_price(c); strike_data[K]['C_sell'] = get_sell_price(c); strike_data[K]['spot'] = c['future_price']
             if not puts.empty:
                 p = puts.iloc[0]
                 if p['bprice'] > 0 and p['sprice'] > 0:
-                    strike_data[K]['P_buy'] = get_buy_price(p); strike_data[K]['P_sell'] = get_sell_price(p); strike_data[K]['spot'] = p['spot_price']
+                    strike_data[K]['P_buy'] = get_buy_price(p); strike_data[K]['P_sell'] = get_sell_price(p); strike_data[K]['spot'] = p['future_price']
         valid_strikes = sorted(strike_data.keys())
         for i in range(len(valid_strikes)):
             for j in range(i+1, len(valid_strikes)):
@@ -217,11 +221,11 @@ def detect_butterfly_iron_condor(df: pd.DataFrame, results: List[Dict]):
             if not calls.empty:
                 c = calls.iloc[0]
                 if c['bprice'] > 0 and c['sprice'] > 0:
-                    strike_data[K]['C_buy'] = get_buy_price(c); strike_data[K]['C_sell'] = get_sell_price(c); strike_data[K]['spot'] = c['spot_price']
+                    strike_data[K]['C_buy'] = get_buy_price(c); strike_data[K]['C_sell'] = get_sell_price(c); strike_data[K]['spot'] = c['future_price']
             if not puts.empty:
                 p = puts.iloc[0]
                 if p['bprice'] > 0 and p['sprice'] > 0:
-                    strike_data[K]['P_buy'] = get_buy_price(p); strike_data[K]['P_sell'] = get_sell_price(p); strike_data[K]['spot'] = p['spot_price']
+                    strike_data[K]['P_buy'] = get_buy_price(p); strike_data[K]['P_sell'] = get_sell_price(p); strike_data[K]['spot'] = p['future_price']
         valid_strikes = sorted(strike_data.keys())
 
         # --- Butterfly Arb (3 legs, symmetric) ---
@@ -285,7 +289,7 @@ def detect_butterfly_iron_condor(df: pd.DataFrame, results: List[Dict]):
                         if profit > 1.0:
                             margin = get_margin(S)
                             ann_ret = calculate_annualized_return(profit, margin, dte)
-                            if ann_ret >= 1000: # Disable this for now
+                            if ann_ret > MIN_ANNUALIZED_RETURN: # Disable this for now
                                 results.append({
                                     'Strategy': 'Iron Condor Arb',
                                     'Cost': round(-credit, 2),
@@ -297,7 +301,7 @@ def detect_butterfly_iron_condor(df: pd.DataFrame, results: List[Dict]):
 def detect_calendar_arbitrage(df: pd.DataFrame, results: List[Dict]):
     """
     Calendar (K) Arbitrage: Exploiting mispricing between different expiries for same strike.
-    Sell near-dated (overpriced), Buy far-dated (underpriced).
+    Hedged with futures to lock in the roll.
     """
     groups = df.groupby(['underlying', 'type', 'strike'])
     for (und, otype, strike), group in groups:
@@ -309,21 +313,37 @@ def detect_calendar_arbitrage(df: pd.DataFrame, results: List[Dict]):
                 near = sorted_group.iloc[i]; far = sorted_group.iloc[j]
                 if near['bprice'] <= 0 or near['sprice'] <= 0 or far['bprice'] <= 0 or far['sprice'] <= 0: continue
                 
-                # Sell Near (overpriced), Buy Far (underpriced) — monotonicity violation
-                # For European options: longer maturity should always cost >= shorter maturity
                 near_sell = get_sell_price(near); far_buy = get_buy_price(far)
-                if near_sell > far_buy:
-                    profit = near_sell - far_buy
-                    # Capital = far_buy (cost of the long leg we must fund)
-                    capital = far_buy if far_buy > 0 else 1.0
+                F_near = near['future_price']; F_far = far['future_price']
+                
+                # Formula choice based on type
+                if otype == 'C':
+                    # Sell Near Call, Buy Far Call | Buy Near Future, Sell Far Future
+                    # Profit = (C_near - C_far) + (F_far - F_near)
+                    profit = (near_sell - far_buy) + (F_far - F_near)
+                    strategy_label = 'Time Call Arb'
+                    detail_legs = f"BuyF:{F_near:.1f}, SellF:{F_far:.1f}"
+                else: # otype == 'P'
+                    # Sell Near Put, Buy Far Put | Sell Near Future, Buy Far Future
+                    # Profit = (P_near - P_far) + (F_near - F_far)
+                    profit = (near_sell - far_buy) + (F_near - F_far)
+                    strategy_label = 'Time Put Arb'
+                    detail_legs = f"SellF:{F_near:.1f}, BuyF:{F_far:.1f}"
+
+                if profit > 1.0:
+                    # Capital = Margin for two futures (roll spread) + Option debit
+                    # Simple assumption: 2 * standard margin for 2 legs
+                    margin = get_margin(F_near) * 2
+                    capital = margin + max(0.0, far_buy - near_sell)
+                    
                     ann_ret = calculate_annualized_return(profit, capital, int(near['days_to_expire']))
                     if ann_ret >= MIN_ANNUALIZED_RETURN:
                         results.append({
-                            'Strategy': 'Calendar Arb', 
+                            'Strategy': strategy_label, 
                             'Cost': round(far_buy - near_sell, 2),
                             'BorrowCost': 0,
-                            'Details': f"{otype} K:{strike} | SellNear(DTE:{int(near['days_to_expire'])})@{near_sell:.2f} BuyFar(DTE:{int(far['days_to_expire'])})@{far_buy:.2f}",
-                            'Profit': round(profit, 2), 'Margin': round(far_buy, 2), 'Ann. Return': ann_ret, 'underlying': und
+                            'Details': f"{otype} K:{strike} DTE:{int(near['days_to_expire'])}v{int(far['days_to_expire'])} | {detail_legs} | OptSpread:{near_sell - far_buy:.2f}",
+                            'Profit': round(profit, 2), 'Margin': round(capital, 2), 'Ann. Return': ann_ret, 'underlying': und
                         })
 
 def main():
@@ -348,7 +368,7 @@ def main():
     df = pd.concat(all_data, ignore_index=True)
     df.columns = df.columns.str.strip()
 
-    required = {'ticker', 'type', 'strike', 'days_to_expire', 'bprice', 'sprice', 'spot_price'}
+    required = {'ticker', 'type', 'strike', 'days_to_expire', 'bprice', 'sprice', 'future_price'}
     missing = required - set(df.columns)
     if missing:
         raise ValueError(f"CSV missing required columns: {missing}")
