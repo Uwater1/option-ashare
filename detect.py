@@ -6,7 +6,7 @@ import argparse
 from typing import List, Dict
 
 MIN_ANNUALIZED_RETURN = 0.05
-BORROW_RATE = 0.8 #Cost of borrowing stock
+BORROW_RATE = 0.08 #Cost of borrowing stock
 
 def calculate_annualized_return(profit: float, capital: float, days_to_expire: int) -> float:
     if capital <= 0:
