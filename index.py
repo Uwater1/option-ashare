@@ -4,6 +4,7 @@ import os
 import yfinance as yf
 import pandas as pd
 from datetime import datetime, date, timedelta
+import numpy as np
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
 
 symbols = [
@@ -115,7 +116,8 @@ def get_futures_prices():
         df = ak.futures_comm_info(symbol="中国金融期货交易所")
         if df is not None and not df.empty:
             # Map contract code (e.g., IF2603) to current price
-            prices = dict(zip(df['合约代码'], df['现价']))
+            # Ensure keys are stripped of whitespace for reliable matching
+            prices = {str(k).strip().upper(): v for k, v in zip(df['合约代码'], df['现价'])}
             return prices
     except Exception as e:
         print(f"Error fetching futures prices: {e}")
@@ -181,7 +183,7 @@ def fetch_with_timeout(symbol, end_month):
     """Wrapper function to fetch option board for a single symbol and month."""
     return ak.option_finance_board(symbol=symbol, end_month=end_month)
 
-def fetch_and_save_options(symbol_list, spot_prices, futures_prices, iterations=3):
+def fetch_and_save_options(symbol_list, spot_prices, futures_prices, iterations=3, output_base_dir="option_data"):
     # Determine target months for all symbols
     target_months = get_target_months()
     print(f"Target expiration months: {target_months}")
@@ -194,13 +196,12 @@ def fetch_and_save_options(symbol_list, spot_prices, futures_prices, iterations=
         for month in target_months:
             # Check if file already exists locally
             filename = f"{symbol}_{month}_{today_str}.csv"
-            filepath = os.path.join("option_data", today_str, filename)
+            filepath = os.path.join(output_base_dir, today_str, filename)
             if os.path.exists(filepath):
                 print(f"File already exists, skipping initial task: {filepath}")
                 continue
             remaining_tasks.append((symbol, month))
             
-    output_base_dir = "option_data"
     os.makedirs(output_base_dir, exist_ok=True)
     
     # Use ThreadPoolExecutor to handle timeouts
@@ -252,16 +253,15 @@ def fetch_and_save_options(symbol_list, spot_prices, futures_prices, iterations=
                                 df.insert(3, "strike", pd.to_numeric(instrument_parts[2], errors="coerce"))
                                 df.drop(columns=["instrument"], inplace=True)
 
-                        # Add spot price column
-                        if symbol in spot_prices:
-                            df['spot_price'] = spot_prices[symbol]
-                        
-                        # Add futures price column
+                        # Always add spot_price and future_price columns (even if NaN)
+                        df['spot_price'] = spot_prices.get(symbol, np.nan)
+
                         prefix = futures_prefix_map.get(symbol)
+                        f_price = np.nan
                         if prefix:
-                            futures_code = f"{prefix}{month[2:]}" # e.g., 202603 -> 2603
-                            if futures_code in futures_prices:
-                                df['future_price'] = futures_prices[futures_code]
+                            futures_code = f"{prefix}{month[2:]}".upper()
+                            f_price = futures_prices.get(futures_code, np.nan)
+                        df['future_price'] = f_price
 
                         # Add days_to_expire column
                         expiry_date = get_expiry_date(month)
@@ -295,7 +295,7 @@ def fetch_and_save_options(symbol_list, spot_prices, futures_prices, iterations=
 if __name__ == "__main__":
     # Get today's date for folder and file organization
     today_str = datetime.now().strftime("%Y%m%d")
-    output_dir = os.path.join("option_data_full", today_str)
+    output_dir = os.path.join("option_data", today_str)
     print(f"Today is {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}, output to {output_dir}")
     os.makedirs(output_dir, exist_ok=True)
 
@@ -309,7 +309,7 @@ if __name__ == "__main__":
     futures_prices = get_futures_prices()
 
     # 3. Proceed with periodic board data fetching (now with multiple expiration months)
-    fetch_and_save_options(symbols, spot_prices, futures_prices, iterations=3)
+    fetch_and_save_options(symbols, spot_prices, futures_prices, iterations=3, output_base_dir="option_data")
 
     # 4. Final retry for daily stats if any failed initially
     if failed_daily_stats:
