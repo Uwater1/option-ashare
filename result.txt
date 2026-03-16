@@ -1,0 +1,194 @@
+Detected 179 arbitrage opportunities
+
+### 上证50 (SSE50)
+No arbitrage opportunities found (Ann. Return >= 5%).
+
+### 沪深300 (CSI300) Arbitrage Opportunities (Ann. Return >= 5%, Sorted by Profit)
+| Strategy     | Cost     | Borrow   | Profit   | Margin   | Ann. Return | Details                                                                |
+|--------------|----------|----------|----------|----------|-------------|------------------------------------------------------------------------|
+| Calendar Arb | -48.6    | 0        | 48.6     | 606.0    | 15.41%      | C K:4000.0 | SellNear(DTE:8.0)@654.60 BuyFar(DTE:190.0)@606.00         |
+| Calendar Arb | -39.6    | 0        | 39.6     | 516.0    | 14.74%      | C K:4100.0 | SellNear(DTE:8.0)@555.60 BuyFar(DTE:190.0)@516.00         |
+| Calendar Arb | -31.0    | 0        | 31.0     | 1219.2   | 9.37%       | C K:3400.0 | SellNear(DTE:8.0)@1250.20 BuyFar(DTE:99.0)@1219.20        |
+| Calendar Arb | -31.0    | 0        | 31.0     | 1120.4   | 10.20%      | C K:3500.0 | SellNear(DTE:8.0)@1151.40 BuyFar(DTE:99.0)@1120.40        |
+| Calendar Arb | -29.2    | 0        | 29.2     | 1022.2   | 10.53%      | C K:3600.0 | SellNear(DTE:8.0)@1051.40 BuyFar(DTE:99.0)@1022.20        |
+| Calendar Arb | -29.0    | 0        | 29.0     | 516.0    | 10.80%      | C K:4100.0 | SellNear(DTE:36.0)@545.00 BuyFar(DTE:190.0)@516.00        |
+| Calendar Arb | -28.0    | 0        | 28.0     | 924.6    | 11.17%      | C K:3700.0 | SellNear(DTE:8.0)@952.60 BuyFar(DTE:99.0)@924.60          |
+| Calendar Arb | -24.6    | 0        | 24.6     | 828.6    | 10.95%      | C K:3800.0 | SellNear(DTE:8.0)@853.20 BuyFar(DTE:99.0)@828.60          |
+| Calendar Arb | -20.0    | 0        | 20.0     | 733.6    | 10.05%      | C K:3900.0 | SellNear(DTE:8.0)@753.60 BuyFar(DTE:99.0)@733.60          |
+| Calendar Arb | -18.8    | 0        | 18.8     | 440.2    | 8.20%       | C K:4200.0 | SellNear(DTE:8.0)@459.00 BuyFar(DTE:190.0)@440.20         |
+| Reversal     | 4675.36  | 8.22     | 17.14    | 468.76   | 166.83%     | K:4650.0 DTE:8.0 | SellStock:4687.6 + SellPut@37.00 - BuyCall@49.20    |
+| Reversal     | 4925.36  | 8.22     | 17.14    | 468.76   | 166.83%     | K:4900.0 DTE:8.0 | SellStock:4687.6 + SellPut@239.60 - BuyCall@1.80    |
+| Reversal     | 5025.36  | 8.22     | 17.14    | 468.76   | 166.83%     | K:5000.0 DTE:8.0 | SellStock:4687.6 + SellPut@338.80 - BuyCall@1.00    |
+| Reversal     | 4325.16  | 8.22     | 16.94    | 468.76   | 164.89%     | K:4300.0 DTE:8.0 | SellStock:4687.6 + SellPut@2.00 - BuyCall@364.40    |
+| Reversal     | 4625.16  | 8.22     | 16.94    | 468.76   | 164.89%     | K:4600.0 DTE:8.0 | SellStock:4687.6 + SellPut@23.20 - BuyCall@85.60    |
+| Reversal     | 4774.76  | 8.22     | 16.54    | 468.76   | 160.99%     | K:4750.0 DTE:8.0 | SellStock:4687.6 + SellPut@97.80 - BuyCall@10.60    |
+| Reversal     | 4824.56  | 8.22     | 16.34    | 468.76   | 159.05%     | K:4800.0 DTE:8.0 | SellStock:4687.6 + SellPut@142.20 - BuyCall@5.20    |
+| Reversal     | 4424.16  | 8.22     | 15.94    | 468.76   | 155.15%     | K:4400.0 DTE:8.0 | SellStock:4687.6 + SellPut@4.20 - BuyCall@267.60    |
+| Reversal     | 4223.96  | 8.22     | 15.74    | 468.76   | 153.21%     | K:4200.0 DTE:8.0 | SellStock:4687.6 + SellPut@1.40 - BuyCall@465.00    |
+| Reversal     | 4523.96  | 8.22     | 15.74    | 468.76   | 153.21%     | K:4500.0 DTE:8.0 | SellStock:4687.6 + SellPut@8.80 - BuyCall@172.40    |
+| Reversal     | 4573.96  | 8.22     | 15.74    | 468.76   | 153.21%     | K:4550.0 DTE:8.0 | SellStock:4687.6 + SellPut@13.80 - BuyCall@127.40   |
+| Reversal     | 4723.96  | 8.22     | 15.74    | 468.76   | 153.21%     | K:4700.0 DTE:8.0 | SellStock:4687.6 + SellPut@61.00 - BuyCall@24.60    |
+| Reversal     | 4473.56  | 8.22     | 15.34    | 468.76   | 149.31%     | K:4450.0 DTE:8.0 | SellStock:4687.6 + SellPut@5.60 - BuyCall@219.60    |
+| Reversal     | 4873.36  | 8.22     | 15.14    | 468.76   | 147.37%     | K:4850.0 DTE:8.0 | SellStock:4687.6 + SellPut@188.80 - BuyCall@3.00    |
+| Calendar Arb | -14.6    | 0        | 14.6     | 640.0    | 8.41%       | C K:4000.0 | SellNear(DTE:8.0)@654.60 BuyFar(DTE:99.0)@640.00          |
+| Reversal     | 4971.96  | 8.22     | 13.74    | 468.76   | 133.74%     | K:4950.0 DTE:8.0 | SellStock:4687.6 + SellPut@285.80 - BuyCall@1.40    |
+| Reversal     | 5121.76  | 8.22     | 13.54    | 468.76   | 131.79%     | K:5100.0 DTE:8.0 | SellStock:4687.6 + SellPut@435.20 - BuyCall@1.00    |
+| Reversal     | 4170.96  | 8.22     | 12.74    | 468.76   | 124.01%     | K:4150.0 DTE:8.0 | SellStock:4687.6 + SellPut@0.80 - BuyCall@517.40    |
+| Reversal     | 4270.96  | 8.22     | 12.74    | 468.76   | 124.01%     | K:4250.0 DTE:8.0 | SellStock:4687.6 + SellPut@1.60 - BuyCall@418.20    |
+| Reversal     | 4370.96  | 8.22     | 12.74    | 468.76   | 124.01%     | K:4350.0 DTE:8.0 | SellStock:4687.6 + SellPut@2.80 - BuyCall@319.40    |
+| Reversal     | 4118.76  | 8.22     | 10.54    | 468.76   | 102.59%     | K:4100.0 DTE:8.0 | SellStock:4687.6 + SellPut@0.80 - BuyCall@569.60    |
+| Reversal     | 4018.36  | 8.22     | 10.14    | 468.76   | 98.70%      | K:4000.0 DTE:8.0 | SellStock:4687.6 + SellPut@0.60 - BuyCall@669.80    |
+| Reversal     | 5218.16  | 8.22     | 9.94     | 468.76   | 96.76%      | K:5200.0 DTE:8.0 | SellStock:4687.6 + SellPut@531.20 - BuyCall@0.60    |
+| Reversal     | 3917.96  | 8.22     | 9.74     | 468.76   | 94.81%      | K:3900.0 DTE:8.0 | SellStock:4687.6 + SellPut@0.40 - BuyCall@770.00    |
+| Calendar Arb | -9.6     | 0        | 9.6      | 546.0    | 6.48%       | C K:4100.0 | SellNear(DTE:8.0)@555.60 BuyFar(DTE:99.0)@546.00          |
+| Reversal     | 3817.16  | 8.22     | 8.94     | 468.76   | 87.02%      | K:3800.0 DTE:8.0 | SellStock:4687.6 + SellPut@0.40 - BuyCall@870.80    |
+| Reversal     | 5316.96  | 8.22     | 8.74     | 468.76   | 85.08%      | K:5300.0 DTE:8.0 | SellStock:4687.6 + SellPut@630.20 - BuyCall@0.80    |
+| Reversal     | 5416.76  | 8.22     | 8.54     | 468.76   | 83.13%      | K:5400.0 DTE:8.0 | SellStock:4687.6 + SellPut@729.80 - BuyCall@0.60    |
+| Reversal     | 3716.56  | 8.22     | 8.34     | 468.76   | 81.18%      | K:3700.0 DTE:8.0 | SellStock:4687.6 + SellPut@0.40 - BuyCall@971.40    |
+| Reversal     | 3616.16  | 8.22     | 7.94     | 468.76   | 77.29%      | K:3600.0 DTE:8.0 | SellStock:4687.6 + SellPut@0.20 - BuyCall@1071.60   |
+| Reversal     | 4644.76  | 36.99    | 7.77     | 468.76   | 16.81%      | K:4600.0 DTE:36.0 | SellStock:4687.6 + SellPut@73.80 - BuyCall@116.60  |
+| Reversal     | 3515.16  | 8.22     | 6.94     | 468.76   | 67.56%      | K:3500.0 DTE:8.0 | SellStock:4687.6 + SellPut@0.20 - BuyCall@1172.60   |
+| Reversal     | 3414.56  | 8.22     | 6.34     | 468.76   | 61.72%      | K:3400.0 DTE:8.0 | SellStock:4687.6 + SellPut@0.20 - BuyCall@1273.20   |
+| Reversal     | 3313.56  | 8.22     | 5.34     | 468.76   | 51.98%      | K:3300.0 DTE:8.0 | SellStock:4687.6 + SellPut@0.20 - BuyCall@1374.20   |
+| Reversal     | 3213.16  | 8.22     | 4.94     | 468.76   | 48.09%      | K:3200.0 DTE:8.0 | SellStock:4687.6 + SellPut@0.20 - BuyCall@1474.60   |
+| Short Box    | -204.6   | 0        | 4.6      | 468.76   | 9.95%       | K1:4400.0 K2:4600.0 DTE:36.0 | Credit:204.60 StrikeWidth:200.0         |
+| Reversal     | 4589.56  | 36.99    | 2.57     | 468.76   | 5.57%       | K:4550.0 DTE:36.0 | SellStock:4687.6 + SellPut@56.00 - BuyCall@154.00  |
+
+### 中证1000 (CSI1000) Arbitrage Opportunities (Ann. Return >= 5%, Sorted by Profit)
+| Strategy     | Cost     | Borrow   | Profit   | Margin   | Ann. Return | Details                                                                |
+|--------------|----------|----------|----------|----------|-------------|------------------------------------------------------------------------|
+| Calendar Arb | -262.4   | 0        | 262.4    | 1793.0   | 28.11%      | C K:6200.0 | SellNear(DTE:8.0)@2055.40 BuyFar(DTE:190.0)@1793.00       |
+| Calendar Arb | -249.0   | 0        | 249.0    | 1607.0   | 29.77%      | C K:6400.0 | SellNear(DTE:8.0)@1856.00 BuyFar(DTE:190.0)@1607.00       |
+| Calendar Arb | -205.4   | 0        | 205.4    | 1448.0   | 27.25%      | C K:6600.0 | SellNear(DTE:8.0)@1653.40 BuyFar(DTE:190.0)@1448.00       |
+| Calendar Arb | -180.0   | 0        | 180.0    | 1278.2   | 27.05%      | C K:6800.0 | SellNear(DTE:8.0)@1458.20 BuyFar(DTE:190.0)@1278.20       |
+| Calendar Arb | -163.8   | 0        | 163.8    | 2691.0   | 22.44%      | C K:5400.0 | SellNear(DTE:8.0)@2854.80 BuyFar(DTE:99.0)@2691.00        |
+| Calendar Arb | -154.0   | 0        | 154.0    | 2899.8   | 19.58%      | C K:5200.0 | SellNear(DTE:8.0)@3053.80 BuyFar(DTE:99.0)@2899.80        |
+| Calendar Arb | -148.6   | 0        | 148.6    | 2105.8   | 26.02%      | C K:6000.0 | SellNear(DTE:8.0)@2254.40 BuyFar(DTE:99.0)@2105.80        |
+| Calendar Arb | -140.2   | 0        | 140.2    | 1915.2   | 26.99%      | C K:6200.0 | SellNear(DTE:8.0)@2055.40 BuyFar(DTE:99.0)@1915.20        |
+| Calendar Arb | -139.4   | 0        | 139.4    | 2513.2   | 20.45%      | C K:5600.0 | SellNear(DTE:8.0)@2652.60 BuyFar(DTE:99.0)@2513.20        |
+| Calendar Arb | -126.6   | 0        | 126.6    | 1131.4   | 21.50%      | C K:7000.0 | SellNear(DTE:8.0)@1258.00 BuyFar(DTE:190.0)@1131.40       |
+| Calendar Arb | -116.4   | 0        | 116.4    | 2324.6   | 18.46%      | C K:5800.0 | SellNear(DTE:8.0)@2441.00 BuyFar(DTE:99.0)@2324.60        |
+| Calendar Arb | -115.0   | 0        | 115.0    | 1741.0   | 24.35%      | C K:6400.0 | SellNear(DTE:8.0)@1856.00 BuyFar(DTE:99.0)@1741.00        |
+| Calendar Arb | -113.0   | 0        | 113.0    | 1540.4   | 27.05%      | C K:6600.0 | SellNear(DTE:8.0)@1653.40 BuyFar(DTE:99.0)@1540.40        |
+| Calendar Arb | -100.2   | 0        | 100.2    | 1358.0   | 27.20%      | C K:6800.0 | SellNear(DTE:8.0)@1458.20 BuyFar(DTE:99.0)@1358.00        |
+| Calendar Arb | -91.2    | 0        | 91.2     | 979.0    | 17.90%      | C K:7200.0 | SellNear(DTE:8.0)@1070.20 BuyFar(DTE:190.0)@979.00        |
+| Reversal     | 8438.31  | 347.14   | 91.17    | 833.59   | 21.01%      | K:8000.0 DTE:190.0 | SellStock:8335.9 + SellPut@615.80 - BuyCall@513.40 |
+| Reversal     | 6837.51  | 347.14   | 90.37    | 833.59   | 20.83%      | K:6400.0 DTE:190.0 | SellStock:8335.9 + SellPut@108.60 - BuyCall@1607.00 |
+| Reversal     | 7233.91  | 347.14   | 86.77    | 833.59   | 20.00%      | K:6800.0 DTE:190.0 | SellStock:8335.9 + SellPut@176.20 - BuyCall@1278.20 |
+| Reversal     | 8033.51  | 347.14   | 86.37    | 833.59   | 19.90%      | K:7600.0 DTE:190.0 | SellStock:8335.9 + SellPut@426.60 - BuyCall@729.00 |
+| Reversal     | 7631.11  | 347.14   | 83.97    | 833.59   | 19.35%      | K:7200.0 DTE:190.0 | SellStock:8335.9 + SellPut@274.20 - BuyCall@979.00 |
+| Reversal     | 6630.91  | 347.14   | 83.77    | 833.59   | 19.30%      | K:6200.0 DTE:190.0 | SellStock:8335.9 + SellPut@88.00 - BuyCall@1793.00 |
+| Reversal     | 5663.31  | 180.88   | 82.43    | 833.59   | 36.46%      | K:5400.0 DTE:99.0 | SellStock:8335.9 + SellPut@18.40 - BuyCall@2691.00 |
+| Reversal     | 7828.91  | 347.14   | 81.77    | 833.59   | 18.84%      | K:7400.0 DTE:190.0 | SellStock:8335.9 + SellPut@341.00 - BuyCall@848.00 |
+| Reversal     | 6262.11  | 180.88   | 81.23    | 833.59   | 35.93%      | K:6000.0 DTE:99.0 | SellStock:8335.9 + SellPut@32.00 - BuyCall@2105.80 |
+| Reversal     | 7427.51  | 347.14   | 80.37    | 833.59   | 18.52%      | K:7000.0 DTE:190.0 | SellStock:8335.9 + SellPut@223.00 - BuyCall@1131.40 |
+| Reversal     | 7025.91  | 347.14   | 78.77    | 833.59   | 18.15%      | K:6600.0 DTE:190.0 | SellStock:8335.9 + SellPut@138.00 - BuyCall@1448.00 |
+| Reversal     | 6459.31  | 180.88   | 78.43    | 833.59   | 34.69%      | K:6200.0 DTE:99.0 | SellStock:8335.9 + SellPut@38.60 - BuyCall@1915.20 |
+| Reversal     | 8458.91  | 180.88   | 78.03    | 833.59   | 34.51%      | K:8200.0 DTE:99.0 | SellStock:8335.9 + SellPut@469.40 - BuyCall@346.40 |
+| Reversal     | 8222.51  | 347.14   | 75.37    | 833.59   | 17.37%      | K:7800.0 DTE:190.0 | SellStock:8335.9 + SellPut@506.00 - BuyCall@619.40 |
+| Reversal     | 7055.71  | 180.88   | 74.83    | 833.59   | 33.10%      | K:6800.0 DTE:99.0 | SellStock:8335.9 + SellPut@77.80 - BuyCall@1358.00 |
+| Reversal     | 8254.51  | 180.88   | 73.63    | 833.59   | 32.57%      | K:8000.0 DTE:99.0 | SellStock:8335.9 + SellPut@366.20 - BuyCall@447.60 |
+| Reversal     | 6853.31  | 180.88   | 72.43    | 833.59   | 32.03%      | K:6600.0 DTE:99.0 | SellStock:8335.9 + SellPut@57.80 - BuyCall@1540.40 |
+| Reversal     | 8618.51  | 347.14   | 71.37    | 833.59   | 16.45%      | K:8200.0 DTE:190.0 | SellStock:8335.9 + SellPut@712.80 - BuyCall@430.20 |
+| Reversal     | 8852.11  | 180.88   | 71.23    | 833.59   | 31.50%      | K:8600.0 DTE:99.0 | SellStock:8335.9 + SellPut@716.00 - BuyCall@199.80 |
+| Reversal     | 5451.91  | 180.88   | 71.03    | 833.59   | 31.42%      | K:5200.0 DTE:99.0 | SellStock:8335.9 + SellPut@15.80 - BuyCall@2899.80 |
+| Reversal     | 9017.91  | 347.14   | 70.77    | 833.59   | 16.31%      | K:8600.0 DTE:190.0 | SellStock:8335.9 + SellPut@979.60 - BuyCall@297.60 |
+| Reversal     | 7451.31  | 180.88   | 70.43    | 833.59   | 31.15%      | K:7200.0 DTE:99.0 | SellStock:8335.9 + SellPut@122.60 - BuyCall@1007.20 |
+| Reversal     | 9250.91  | 180.88   | 70.03    | 833.59   | 30.97%      | K:9000.0 DTE:99.0 | SellStock:8335.9 + SellPut@1026.80 - BuyCall@111.80 |
+| Calendar Arb | -69.8    | 0        | 69.8     | 1793.0   | 7.48%       | C K:6200.0 | SellNear(DTE:99.0)@1862.80 BuyFar(DTE:190.0)@1793.00      |
+| Calendar Arb | -69.8    | 0        | 69.8     | 1188.2   | 21.66%      | C K:7000.0 | SellNear(DTE:8.0)@1258.00 BuyFar(DTE:99.0)@1188.20        |
+| Reversal     | 7650.31  | 180.88   | 69.43    | 833.59   | 30.71%      | K:7400.0 DTE:99.0 | SellStock:8335.9 + SellPut@163.60 - BuyCall@849.20 |
+| Calendar Arb | -68.8    | 0        | 68.8     | 1607.0   | 8.22%       | C K:6400.0 | SellNear(DTE:99.0)@1675.80 BuyFar(DTE:190.0)@1607.00      |
+| Reversal     | 8815.71  | 347.14   | 68.57    | 833.59   | 15.80%      | K:8400.0 DTE:190.0 | SellStock:8335.9 + SellPut@838.40 - BuyCall@358.60 |
+| Reversal     | 7848.91  | 180.88   | 68.03    | 833.59   | 30.09%      | K:7600.0 DTE:99.0 | SellStock:8335.9 + SellPut@216.80 - BuyCall@703.80 |
+| Reversal     | 7247.71  | 180.88   | 66.83    | 833.59   | 29.56%      | K:7000.0 DTE:99.0 | SellStock:8335.9 + SellPut@100.00 - BuyCall@1188.20 |
+| Reversal     | 8646.51  | 180.88   | 65.63    | 833.59   | 29.03%      | K:8400.0 DTE:99.0 | SellStock:8335.9 + SellPut@577.00 - BuyCall@266.40 |
+| Reversal     | 9044.91  | 180.88   | 64.03    | 833.59   | 28.32%      | K:8800.0 DTE:99.0 | SellStock:8335.9 + SellPut@866.00 - BuyCall@157.00 |
+| Reversal     | 5844.31  | 180.88   | 63.43    | 833.59   | 28.05%      | K:5600.0 DTE:99.0 | SellStock:8335.9 + SellPut@21.60 - BuyCall@2513.20 |
+| Reversal     | 9210.31  | 347.14   | 63.17    | 833.59   | 14.56%      | K:8800.0 DTE:190.0 | SellStock:8335.9 + SellPut@1116.20 - BuyCall@241.80 |
+| Calendar Arb | -63.0    | 0        | 63.0     | 1007.2   | 23.06%      | C K:7200.0 | SellNear(DTE:8.0)@1070.20 BuyFar(DTE:99.0)@1007.20        |
+| Reversal     | 8043.71  | 180.88   | 62.83    | 833.59   | 27.79%      | K:7800.0 DTE:99.0 | SellStock:8335.9 + SellPut@280.60 - BuyCall@572.80 |
+| Reversal     | 6642.71  | 180.88   | 61.83    | 833.59   | 27.35%      | K:6400.0 DTE:99.0 | SellStock:8335.9 + SellPut@47.80 - BuyCall@1741.00 |
+| Reversal     | 9639.31  | 180.88   | 58.43    | 833.59   | 25.84%      | K:9400.0 DTE:99.0 | SellStock:8335.9 + SellPut@1372.20 - BuyCall@68.80 |
+| Reversal     | 9404.51  | 347.14   | 57.37    | 833.59   | 13.22%      | K:9000.0 DTE:190.0 | SellStock:8335.9 + SellPut@1266.40 - BuyCall@197.80 |
+| Reversal     | 8222.71  | 65.77    | 56.93    | 833.59   | 69.25%      | K:8100.0 DTE:36.0 | SellStock:8335.9 + SellPut@206.20 - BuyCall@319.40 |
+| Reversal     | 6036.71  | 180.88   | 55.83    | 833.59   | 24.69%      | K:5800.0 DTE:99.0 | SellStock:8335.9 + SellPut@25.40 - BuyCall@2324.60 |
+| Reversal     | 8420.31  | 65.77    | 54.53    | 833.59   | 66.33%      | K:8300.0 DTE:36.0 | SellStock:8335.9 + SellPut@295.40 - BuyCall@211.00 |
+| Reversal     | 8720.31  | 65.77    | 54.53    | 833.59   | 66.33%      | K:8600.0 DTE:36.0 | SellStock:8335.9 + SellPut@482.40 - BuyCall@98.00  |
+| Reversal     | 9435.31  | 180.88   | 54.43    | 833.59   | 24.07%      | K:9200.0 DTE:99.0 | SellStock:8335.9 + SellPut@1189.00 - BuyCall@89.60 |
+| Reversal     | 8117.91  | 65.77    | 52.13    | 833.59   | 63.41%      | K:8000.0 DTE:36.0 | SellStock:8335.9 + SellPut@172.00 - BuyCall@390.00 |
+| Reversal     | 9599.11  | 347.14   | 51.97    | 833.59   | 11.98%      | K:9200.0 DTE:190.0 | SellStock:8335.9 + SellPut@1428.40 - BuyCall@165.20 |
+| Reversal     | 9317.51  | 65.77    | 51.73    | 833.59   | 62.92%      | K:9200.0 DTE:36.0 | SellStock:8335.9 + SellPut@1000.00 - BuyCall@18.40 |
+| Reversal     | 9832.11  | 180.88   | 51.23    | 833.59   | 22.66%      | K:9600.0 DTE:99.0 | SellStock:8335.9 + SellPut@1549.00 - BuyCall@52.80 |
+| Reversal     | 8016.51  | 65.77    | 50.73    | 833.59   | 61.71%      | K:7900.0 DTE:36.0 | SellStock:8335.9 + SellPut@141.00 - BuyCall@460.40 |
+| Reversal     | 8315.91  | 65.77    | 50.13    | 833.59   | 60.98%      | K:8200.0 DTE:36.0 | SellStock:8335.9 + SellPut@244.40 - BuyCall@264.40 |
+| Reversal     | 8515.31  | 65.77    | 49.53    | 833.59   | 60.25%      | K:8400.0 DTE:36.0 | SellStock:8335.9 + SellPut@344.00 - BuyCall@164.60 |
+| Reversal     | 9796.51  | 347.14   | 49.37    | 833.59   | 11.38%      | K:9400.0 DTE:190.0 | SellStock:8335.9 + SellPut@1597.60 - BuyCall@137.00 |
+| Reversal     | 7815.11  | 65.77    | 49.33    | 833.59   | 60.00%      | K:7700.0 DTE:36.0 | SellStock:8335.9 + SellPut@94.80 - BuyCall@615.60  |
+| Calendar Arb | -48.4    | 0        | 48.4     | 979.0    | 9.50%       | C K:7200.0 | SellNear(DTE:36.0)@1027.40 BuyFar(DTE:190.0)@979.00       |
+| Reversal     | 9993.91  | 347.14   | 46.77    | 833.59   | 10.78%      | K:9600.0 DTE:190.0 | SellStock:8335.9 + SellPut@1767.00 - BuyCall@109.00 |
+| Reversal     | 8611.91  | 65.77    | 46.13    | 833.59   | 56.11%      | K:8500.0 DTE:36.0 | SellStock:8335.9 + SellPut@406.80 - BuyCall@130.80 |
+| Reversal     | 7511.11  | 65.77    | 45.33    | 833.59   | 55.14%      | K:7400.0 DTE:36.0 | SellStock:8335.9 + SellPut@53.00 - BuyCall@877.80  |
+| Reversal     | 7710.91  | 65.77    | 45.13    | 833.59   | 54.90%      | K:7600.0 DTE:36.0 | SellStock:8335.9 + SellPut@79.00 - BuyCall@704.00  |
+| Reversal     | 7410.31  | 65.77    | 44.53    | 833.59   | 54.17%      | K:7300.0 DTE:36.0 | SellStock:8335.9 + SellPut@42.40 - BuyCall@968.00  |
+| Reversal     | 7610.31  | 65.77    | 44.53    | 833.59   | 54.17%      | K:7500.0 DTE:36.0 | SellStock:8335.9 + SellPut@64.00 - BuyCall@789.60  |
+| Reversal     | 8808.91  | 65.77    | 43.13    | 833.59   | 52.46%      | K:8700.0 DTE:36.0 | SellStock:8335.9 + SellPut@545.20 - BuyCall@72.20  |
+| Reversal     | 7857.51  | 14.62    | 42.89    | 833.59   | 234.76%     | K:7800.0 DTE:8.0 | SellStock:8335.9 + SellPut@18.00 - BuyCall@496.40   |
+| Reversal     | 8057.51  | 14.62    | 42.89    | 833.59   | 234.76%     | K:8000.0 DTE:8.0 | SellStock:8335.9 + SellPut@35.40 - BuyCall@313.80   |
+| Reversal     | 7908.51  | 65.77    | 42.73    | 833.59   | 51.98%      | K:7800.0 DTE:36.0 | SellStock:8335.9 + SellPut@114.00 - BuyCall@541.40 |
+| Reversal     | 8157.11  | 14.62    | 42.49    | 833.59   | 232.57%     | K:8100.0 DTE:8.0 | SellStock:8335.9 + SellPut@51.60 - BuyCall@230.40   |
+| Calendar Arb | -42.4    | 0        | 42.4     | 1448.0   | 5.63%       | C K:6600.0 | SellNear(DTE:99.0)@1490.40 BuyFar(DTE:190.0)@1448.00      |
+| Reversal     | 8656.91  | 14.62    | 42.29    | 833.59   | 231.48%     | K:8600.0 DTE:8.0 | SellStock:8335.9 + SellPut@335.00 - BuyCall@14.00   |
+| Reversal     | 8907.51  | 65.77    | 41.73    | 833.59   | 50.76%      | K:8800.0 DTE:36.0 | SellStock:8335.9 + SellPut@626.60 - BuyCall@55.00  |
+| Reversal     | 9007.11  | 65.77    | 41.33    | 833.59   | 50.27%      | K:8900.0 DTE:36.0 | SellStock:8335.9 + SellPut@712.60 - BuyCall@41.40  |
+| Reversal     | 8355.71  | 14.62    | 41.09    | 833.59   | 224.91%     | K:8300.0 DTE:8.0 | SellStock:8335.9 + SellPut@115.00 - BuyCall@95.20   |
+| Reversal     | 9106.71  | 65.77    | 40.93    | 833.59   | 49.79%      | K:9000.0 DTE:36.0 | SellStock:8335.9 + SellPut@802.00 - BuyCall@31.20  |
+| Reversal     | 8255.51  | 14.62    | 40.89    | 833.59   | 223.81%     | K:8200.0 DTE:8.0 | SellStock:8335.9 + SellPut@76.60 - BuyCall@157.00   |
+| Reversal     | 8455.51  | 14.62    | 40.89    | 833.59   | 223.81%     | K:8400.0 DTE:8.0 | SellStock:8335.9 + SellPut@172.80 - BuyCall@53.20   |
+| Reversal     | 9206.31  | 65.77    | 40.53    | 833.59   | 49.30%      | K:9100.0 DTE:36.0 | SellStock:8335.9 + SellPut@894.40 - BuyCall@24.00  |
+| Reversal     | 8554.11  | 14.62    | 39.49    | 833.59   | 216.15%     | K:8500.0 DTE:8.0 | SellStock:8335.9 + SellPut@245.80 - BuyCall@27.60   |
+| Reversal     | 7953.71  | 14.62    | 39.09    | 833.59   | 213.96%     | K:7900.0 DTE:8.0 | SellStock:8335.9 + SellPut@24.60 - BuyCall@406.80   |
+| Reversal     | 8752.51  | 14.62    | 37.89    | 833.59   | 207.39%     | K:8700.0 DTE:8.0 | SellStock:8335.9 + SellPut@423.40 - BuyCall@6.80    |
+| Reversal     | 8852.31  | 14.62    | 37.69    | 833.59   | 206.30%     | K:8800.0 DTE:8.0 | SellStock:8335.9 + SellPut@520.60 - BuyCall@4.20    |
+| Reversal     | 7301.91  | 65.77    | 36.13    | 833.59   | 43.95%      | K:7200.0 DTE:36.0 | SellStock:8335.9 + SellPut@34.80 - BuyCall@1068.80 |
+| Reversal     | 7747.31  | 14.62    | 32.69    | 833.59   | 178.93%     | K:7700.0 DTE:8.0 | SellStock:8335.9 + SellPut@13.00 - BuyCall@601.60   |
+| Reversal     | 7647.11  | 14.62    | 32.49    | 833.59   | 177.84%     | K:7600.0 DTE:8.0 | SellStock:8335.9 + SellPut@9.80 - BuyCall@698.60    |
+| Reversal     | 7546.71  | 14.62    | 32.09    | 833.59   | 175.65%     | K:7500.0 DTE:8.0 | SellStock:8335.9 + SellPut@7.20 - BuyCall@796.40    |
+| Reversal     | 7446.31  | 14.62    | 31.69    | 833.59   | 173.46%     | K:7400.0 DTE:8.0 | SellStock:8335.9 + SellPut@5.40 - BuyCall@895.00    |
+| Reversal     | 7346.11  | 14.62    | 31.49    | 833.59   | 172.36%     | K:7300.0 DTE:8.0 | SellStock:8335.9 + SellPut@4.20 - BuyCall@994.00    |
+| Reversal     | 8945.91  | 14.62    | 31.29    | 833.59   | 171.27%     | K:8900.0 DTE:8.0 | SellStock:8335.9 + SellPut@612.60 - BuyCall@2.60    |
+| Reversal     | 9045.11  | 14.62    | 30.49    | 833.59   | 166.89%     | K:9000.0 DTE:8.0 | SellStock:8335.9 + SellPut@711.80 - BuyCall@2.60    |
+| Reversal     | 9144.91  | 14.62    | 30.29    | 833.59   | 165.80%     | K:9100.0 DTE:8.0 | SellStock:8335.9 + SellPut@811.40 - BuyCall@2.40    |
+| Reversal     | 7195.91  | 65.77    | 30.13    | 833.59   | 36.65%      | K:7100.0 DTE:36.0 | SellStock:8335.9 + SellPut@28.60 - BuyCall@1168.60 |
+| Reversal     | 9244.51  | 14.62    | 29.89    | 833.59   | 163.61%     | K:9200.0 DTE:8.0 | SellStock:8335.9 + SellPut@911.20 - BuyCall@2.60    |
+| Reversal     | 9344.51  | 14.62    | 29.89    | 833.59   | 163.61%     | K:9300.0 DTE:8.0 | SellStock:8335.9 + SellPut@1011.00 - BuyCall@2.40   |
+| Reversal     | 9394.51  | 65.77    | 28.73    | 833.59   | 34.95%      | K:9300.0 DTE:36.0 | SellStock:8335.9 + SellPut@1073.00 - BuyCall@14.40 |
+| Reversal     | 9591.71  | 65.77    | 25.93    | 833.59   | 31.54%      | K:9500.0 DTE:36.0 | SellStock:8335.9 + SellPut@1265.40 - BuyCall@9.60  |
+| Reversal     | 9491.31  | 65.77    | 25.53    | 833.59   | 31.06%      | K:9400.0 DTE:36.0 | SellStock:8335.9 + SellPut@1167.80 - BuyCall@12.40 |
+| Reversal     | 7238.51  | 14.62    | 23.89    | 833.59   | 130.77%     | K:7200.0 DTE:8.0 | SellStock:8335.9 + SellPut@3.40 - BuyCall@1100.80   |
+| Calendar Arb | -23.4    | 0        | 23.4     | 848.0    | 5.30%       | C K:7400.0 | SellNear(DTE:8.0)@871.40 BuyFar(DTE:190.0)@848.00         |
+| Reversal     | 6437.71  | 14.62    | 23.09    | 833.59   | 126.39%     | K:6400.0 DTE:8.0 | SellStock:8335.9 + SellPut@1.20 - BuyCall@1899.40   |
+| Reversal     | 5837.31  | 14.62    | 22.69    | 833.59   | 124.20%     | K:5800.0 DTE:8.0 | SellStock:8335.9 + SellPut@0.80 - BuyCall@2499.40   |
+| Calendar Arb | -22.2    | 0        | 22.2     | 849.2    | 9.64%       | C K:7400.0 | SellNear(DTE:8.0)@871.40 BuyFar(DTE:99.0)@849.20          |
+| Reversal     | 6636.71  | 14.62    | 22.09    | 833.59   | 120.91%     | K:6600.0 DTE:8.0 | SellStock:8335.9 + SellPut@1.60 - BuyCall@1700.80   |
+| Reversal     | 6936.51  | 14.62    | 21.89    | 833.59   | 119.82%     | K:6900.0 DTE:8.0 | SellStock:8335.9 + SellPut@2.20 - BuyCall@1401.60   |
+| Reversal     | 6036.11  | 14.62    | 21.49    | 833.59   | 117.63%     | K:6000.0 DTE:8.0 | SellStock:8335.9 + SellPut@1.00 - BuyCall@2300.80   |
+| Reversal     | 6836.11  | 14.62    | 21.49    | 833.59   | 117.63%     | K:6800.0 DTE:8.0 | SellStock:8335.9 + SellPut@2.20 - BuyCall@1502.00   |
+| Reversal     | 6735.71  | 14.62    | 21.09    | 833.59   | 115.44%     | K:6700.0 DTE:8.0 | SellStock:8335.9 + SellPut@1.80 - BuyCall@1602.00   |
+| Reversal     | 7035.51  | 14.62    | 20.89    | 833.59   | 114.35%     | K:7000.0 DTE:8.0 | SellStock:8335.9 + SellPut@2.80 - BuyCall@1303.20   |
+| Reversal     | 6235.31  | 14.62    | 20.69    | 833.59   | 113.25%     | K:6200.0 DTE:8.0 | SellStock:8335.9 + SellPut@1.00 - BuyCall@2101.60   |
+| Calendar Arb | -20.2    | 0        | 20.2     | 1007.2   | 7.39%       | C K:7200.0 | SellNear(DTE:36.0)@1027.40 BuyFar(DTE:99.0)@1007.20       |
+| Reversal     | 4933.91  | 14.62    | 19.29    | 833.59   | 105.59%     | K:4900.0 DTE:8.0 | SellStock:8335.9 + SellPut@0.60 - BuyCall@3402.60   |
+| Reversal     | 6533.91  | 14.62    | 19.29    | 833.59   | 105.59%     | K:6500.0 DTE:8.0 | SellStock:8335.9 + SellPut@1.40 - BuyCall@1803.40   |
+| Reversal     | 9533.71  | 14.62    | 19.09    | 833.59   | 104.49%     | K:9500.0 DTE:8.0 | SellStock:8335.9 + SellPut@1200.00 - BuyCall@2.20   |
+| Reversal     | 5433.31  | 14.62    | 18.69    | 833.59   | 102.30%     | K:5400.0 DTE:8.0 | SellStock:8335.9 + SellPut@0.80 - BuyCall@2903.40   |
+| Reversal     | 9433.31  | 14.62    | 18.69    | 833.59   | 102.30%     | K:9400.0 DTE:8.0 | SellStock:8335.9 + SellPut@1099.60 - BuyCall@2.20   |
+| Reversal     | 7132.71  | 14.62    | 18.09    | 833.59   | 99.02%      | K:7100.0 DTE:8.0 | SellStock:8335.9 + SellPut@3.00 - BuyCall@1206.20   |
+| Reversal     | 5227.31  | 14.62    | 12.69    | 833.59   | 69.47%      | K:5200.0 DTE:8.0 | SellStock:8335.9 + SellPut@0.80 - BuyCall@3109.40   |
+| Reversal     | 5626.31  | 14.62    | 11.69    | 833.59   | 63.99%      | K:5600.0 DTE:8.0 | SellStock:8335.9 + SellPut@1.00 - BuyCall@2710.60   |
+| Reversal     | 5022.11  | 14.62    | 7.49     | 833.59   | 41.00%      | K:5000.0 DTE:8.0 | SellStock:8335.9 + SellPut@0.60 - BuyCall@3314.40   |
+| Long Box     | 398.6    | 0        | 1.4      | 833.59   | 7.66%       | K1:7800.0 K2:8200.0 DTE:8.0 | C:496.4-156.8 P:77.0-18.0                |
+| Long Box     | 198.6    | 0        | 1.4      | 833.59   | 7.66%       | K1:8000.0 K2:8200.0 DTE:8.0 | C:313.8-156.8 P:77.0-35.4                |
+
+### Unknown
+No arbitrage opportunities found (Ann. Return >= 5%).
