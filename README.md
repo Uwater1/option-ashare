@@ -38,3 +38,11 @@ python index.py # download all index data from A stock for today
 ---
 > [!NOTE]  
 > This project is for educational and research purposes only. Always verify financial data before making investment decisions.
+
+## Option Study
+
+```bash
+python detect.py # Detect Arbitrage opportunity
+
+python keeper.py # Keep a portfolio with delta=1 using options, auto select the best one.
+```

@@ -20,6 +20,10 @@ def get_syn_prices(df):
     S_syn = K + C_ask - P_bid (Price to enter long)
     S_exit = K + C_bid - P_ask (Price to exit long)
     """
+    # Requirement: Ignore pairs with < 5 days to expire
+    if 'days_to_expire' in df.columns and df['days_to_expire'].iloc[0] < 5:
+        return {}
+
     results = {}
     calls = df[df['type'] == 'C']
     puts = df[df['type'] == 'P']
@@ -127,20 +131,22 @@ def main():
             if active_key in all_syn_data:
                 active_syn_mid = all_syn_data[active_key]['syn_mid']
             else:
-                # If current position is missing from data, use previous mid (approx)
                 active_syn_mid = books[code][-1]['SynMid'] if books[code] else 0
                 
             pnl = (active_syn_mid - positions[code]['entry_cost']) + positions[code]['cum_pnl_offset']
-            discount = spot - active_syn_mid
+            advantage = spot - active_syn_mid # Positive means synthetic is cheaper than stock
             
             books[code].append({
                 'Date': date,
                 'Exp': active_expiry,
                 'K': active_k,
-                'Spot': round(spot, 2),
-                'SynMid': round(active_syn_mid, 2),
-                'Disc': round(discount, 2),
-                'PnL': round(pnl, 2),
+                'Spot': round(spot, 1),
+                'SynMid': round(active_syn_mid, 1),
+                'Adv': round(advantage, 1), # Better than stock by X points
+                'BestExp': best_expiry,
+                'BestK': best_k,
+                'BestSyn': round(all_syn_data[best_key]['syn_mid'], 1),
+                'PnL': round(pnl, 1),
                 'Action': action
             })
 
