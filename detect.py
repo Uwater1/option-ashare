@@ -24,7 +24,7 @@ def get_buy_price(row):
 def get_sell_price(row):
     # Conservative: we receive the bid price (bprice)
     p = float(row['bprice'])
-    return p if p > 0 else 0.0
+    return p if p > 0 else None  # None signals "no valid bid" — callers must check
 
 def get_underlying(ticker: str) -> str:
     # HO: SSE 50, IO: CSI 300, MO: CSI 1000
@@ -32,7 +32,9 @@ def get_underlying(ticker: str) -> str:
     for prefix in ['HO', 'IO', 'MO']:
         if ticker.startswith(prefix):
             return prefix
-    return ticker[:2]
+    fallback = ticker[:2] if len(ticker) >= 2 else ticker
+    print(f"[WARNING] Unrecognised ticker prefix: '{ticker}' — grouped as '{fallback}'")
+    return fallback
 
 def get_margin(spot_price, underlying='HO'):
     # Simple margin estimate: 10% of spot
@@ -100,32 +102,32 @@ def detect_box_spreads(df: pd.DataFrame, results: List[Dict]):
             for j in range(i+1, len(valid_strikes)):
                 K1 = valid_strikes[i]; K2 = valid_strikes[j]
                 sd1 = strike_data[K1]; sd2 = strike_data[K2]
-                S = sd1['spot']; margin = get_margin(S)
-                # Long Box
+                S = sd1['spot']
+                # Long Box: only capital at risk is the debit paid
                 debit = sd1['C_buy'] - sd2['C_sell'] + sd2['P_buy'] - sd1['P_sell']
                 profit = (K2 - K1) - debit
                 if profit > 1.0:
-                    ann_ret = calculate_annualized_return(profit, margin, dte)
+                    ann_ret = calculate_annualized_return(profit, debit, dte)
                     if ann_ret >= MIN_ANNUALIZED_RETURN:
                         results.append({
                             'Strategy': 'Long Box', 
                             'Cost': round(debit, 2),
                             'BorrowCost': 0,
                             'Details': f"K1:{K1} K2:{K2} DTE:{dte} | C:{sd1['C_buy']:.1f}-{sd2['C_sell']:.1f} P:{sd2['P_buy']:.1f}-{sd1['P_sell']:.1f}", 
-                            'Profit': round(profit, 2), 'Margin': round(margin, 2), 'Ann. Return': ann_ret, 'underlying': und
+                            'Profit': round(profit, 2), 'Margin': round(debit, 2), 'Ann. Return': ann_ret, 'underlying': und
                         })
-                # Short Box
+                # Short Box: max liability = strike width (settlement at expiry)
                 credit = sd1['C_sell'] - sd2['C_buy'] + sd2['P_sell'] - sd1['P_buy']
                 profit = credit - (K2 - K1)
                 if profit > 1.0:
-                    ann_ret = calculate_annualized_return(profit, margin, dte)
+                    ann_ret = calculate_annualized_return(profit, K2 - K1, dte)
                     if ann_ret >= MIN_ANNUALIZED_RETURN:
                         results.append({
                             'Strategy': 'Short Box', 
                             'Cost': round(-credit, 2),
                             'BorrowCost': 0,
                             'Details': f"K1:{K1} K2:{K2} DTE:{dte} | Credit:{credit:.2f} StrikeWidth:{K2-K1}", 
-                            'Profit': round(profit, 2), 'Margin': round(margin, 2), 'Ann. Return': ann_ret, 'underlying': und
+                            'Profit': round(profit, 2), 'Margin': round(K2 - K1, 2), 'Ann. Return': ann_ret, 'underlying': und
                         })
 
 def detect_vertical_spreads(df: pd.DataFrame, results: List[Dict]):
@@ -234,27 +236,31 @@ def detect_butterfly_iron_condor(df: pd.DataFrame, results: List[Dict]):
                     if 'C_buy' in sd1 and 'C_sell' in sd2 and 'C_buy' in sd3:
                         cost = sd1['C_buy'] - 2 * sd2['C_sell'] + sd3['C_buy']
                         if cost < 0:
-                            profit = abs(cost); ann_ret = calculate_annualized_return(profit, margin, dte)
-                            if ann_ret >= MIN_ANNUALIZED_RETURN:
-                                results.append({
-                                    'Strategy': 'Call Butterfly Arb', 
-                                    'Cost': round(cost, 2),
-                                    'BorrowCost': 0,
-                                    'Details': f"K:{K1},{K2},{K3} DTE:{dte} | Credit:{abs(cost):.2f}", 
-                                    'Profit': round(profit, 2), 'Margin': round(margin, 2), 'Ann. Return': ann_ret, 'underlying': und
-                                })
+                            profit = abs(cost)
+                            if profit > 1.0:
+                                ann_ret = calculate_annualized_return(profit, margin, dte)
+                                if ann_ret >= MIN_ANNUALIZED_RETURN:
+                                    results.append({
+                                        'Strategy': 'Call Butterfly Arb', 
+                                        'Cost': round(cost, 2),
+                                        'BorrowCost': 0,
+                                        'Details': f"K:{K1},{K2},{K3} DTE:{dte} | Credit:{abs(cost):.2f}", 
+                                        'Profit': round(profit, 2), 'Margin': round(margin, 2), 'Ann. Return': ann_ret, 'underlying': und
+                                    })
                     if 'P_buy' in sd1 and 'P_sell' in sd2 and 'P_buy' in sd3:
                         cost = sd1['P_buy'] - 2 * sd2['P_sell'] + sd3['P_buy']
                         if cost < 0:
-                            profit = abs(cost); ann_ret = calculate_annualized_return(profit, margin, dte)
-                            if ann_ret >= MIN_ANNUALIZED_RETURN:
-                                results.append({
-                                    'Strategy': 'Put Butterfly Arb', 
-                                    'Cost': round(cost, 2),
-                                    'BorrowCost': 0,
-                                    'Details': f"K:{K1},{K2},{K3} DTE:{dte} | Credit:{abs(cost):.2f}", 
-                                    'Profit': round(profit, 2), 'Margin': round(margin, 2), 'Ann. Return': ann_ret, 'underlying': und
-                                })
+                            profit = abs(cost)
+                            if profit > 1.0:
+                                ann_ret = calculate_annualized_return(profit, margin, dte)
+                                if ann_ret >= MIN_ANNUALIZED_RETURN:
+                                    results.append({
+                                        'Strategy': 'Put Butterfly Arb', 
+                                        'Cost': round(cost, 2),
+                                        'BorrowCost': 0,
+                                        'Details': f"K:{K1},{K2},{K3} DTE:{dte} | Credit:{abs(cost):.2f}", 
+                                        'Profit': round(profit, 2), 'Margin': round(margin, 2), 'Ann. Return': ann_ret, 'underlying': und
+                                    })
 
         # --- Iron Condor Arb (4 legs: K1 < K2 < K3 < K4) ---
         # Buy put@K1, Sell put@K2, Sell call@K3, Buy call@K4
@@ -279,7 +285,7 @@ def detect_butterfly_iron_condor(df: pd.DataFrame, results: List[Dict]):
                         if profit > 1.0:
                             margin = get_margin(S)
                             ann_ret = calculate_annualized_return(profit, margin, dte)
-                            if ann_ret >= MIN_ANNUALIZED_RETURN:
+                            if ann_ret >= 1000:
                                 results.append({
                                     'Strategy': 'Iron Condor Arb',
                                     'Cost': round(-credit, 2),
@@ -316,7 +322,7 @@ def detect_calendar_arbitrage(df: pd.DataFrame, results: List[Dict]):
                             'Strategy': 'Calendar Arb', 
                             'Cost': round(far_buy - near_sell, 2),
                             'BorrowCost': 0,
-                            'Details': f"{otype} K:{strike} | SellNear(DTE:{near['days_to_expire']})@{near_sell:.2f} BuyFar(DTE:{far['days_to_expire']})@{far_buy:.2f}",
+                            'Details': f"{otype} K:{strike} | SellNear(DTE:{int(near['days_to_expire'])})@{near_sell:.2f} BuyFar(DTE:{int(far['days_to_expire'])})@{far_buy:.2f}",
                             'Profit': round(profit, 2), 'Margin': round(far_buy, 2), 'Ann. Return': ann_ret, 'underlying': und
                         })
 
@@ -341,6 +347,12 @@ def main():
         
     df = pd.concat(all_data, ignore_index=True)
     df.columns = df.columns.str.strip()
+
+    required = {'ticker', 'type', 'strike', 'days_to_expire', 'bprice', 'sprice', 'spot_price'}
+    missing = required - set(df.columns)
+    if missing:
+        raise ValueError(f"CSV missing required columns: {missing}")
+
     df['underlying'] = df['ticker'].apply(get_underlying)
     
     # Run all detections on combined data
