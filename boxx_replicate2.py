@@ -8,7 +8,7 @@ from datetime import datetime
 DATA_DIR = 'option_data'
 START_DATE = '20260306'
 CASH_YIELD = 2.0  # Annualized yield for holding cash in %
-FEE_PER_CONTRACT = 0.1 # Transaction cost in index points
+FEE_PER_CONTRACT = 0 # Transaction cost in index points
 
 def get_box_spread_candidates(df):
     if df.empty:
