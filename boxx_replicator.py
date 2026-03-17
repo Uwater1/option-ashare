@@ -238,6 +238,9 @@ def main():
                         extra_gain_pts = (yield_diff / 100) * t_rem * (curr_K2 - curr_K1)
                         
                         # Decide: Roll, Hold, or Sell to Cash
+                        if date == '20260309' and code == 'IO':
+                            print(f"DEBUG {date} {code}: best_yield={best_yield:.2f} curr_yield={curr_yield:.2f} friction={total_friction:.2f} extra_gain_pts={extra_gain_pts:.2f}")
+
                         if best_yield < CASH_YIELD - 0.2:
                             # Yields across the board are bad, move to cash
                             positions[code]['cash_balance'] += (curr_box_sell - 4 * FEE_PER_CONTRACT)
