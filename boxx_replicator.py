@@ -11,8 +11,8 @@ INDICES = {
     'MO': '中证1000股指期权'
 }
 # We consider expiries from 2 to 12 months (approx 30 to 180 days)
-MIN_DTE = 40
-MAX_DTE = 365
+MIN_DTE = 28
+MAX_DTE = 200
 DATA_DIR = 'option_data'
 START_DATE = '20260306'
 FEE_PER_CONTRACT = 0 # Index points per contract (friction)
@@ -280,11 +280,15 @@ def main():
                     active_yield = 0
                 
                 box_value = active_box_mid
+                exp_yield = (width / active_box_mid - 1) * 100 if active_box_mid > 0 else 0
             else:
                 active_K1 = active_K2 = 0
                 active_box_mid = 0
                 active_yield = CASH_YIELD
                 box_value = 0
+                active_dte = 0
+                exp_yield = 0
+                width = 0
             
             nav = cash + box_value
             pnl = nav # Since initial cash was 0 or handled relative to capital
@@ -297,8 +301,10 @@ def main():
                 'K1': active_K1,
                 'K2': active_K2,
                 'Width': width,
+                'DTE': active_dte,
                 'BoxMid': round(active_box_mid, 1),
                 'AnnYield': round(active_yield, 2),
+                'Exp%': round(exp_yield, 2),
                 'BestYield': round(max(best_yield, CASH_YIELD), 2),
                 'NAV': round(nav, 1),
                 'PnL%': round(total_return, 2),
