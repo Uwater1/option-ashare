@@ -10,9 +10,9 @@ INDICES = {
     'IO': '沪深300股指期权',
     'MO': '中证1000股指期权'
 }
-# We consider expiries from 1 to 6 months (approx 30 to 180 days)
-MIN_DTE = 20
-MAX_DTE = 181
+# We consider expiries from 2 to 12 months (approx 30 to 180 days)
+MIN_DTE = 40
+MAX_DTE = 365
 DATA_DIR = 'option_data'
 START_DATE = '20260306'
 FEE_PER_CONTRACT = 0 # Index points per contract (friction)
