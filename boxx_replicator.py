@@ -237,15 +237,16 @@ def main():
                         yield_diff = best_yield - curr_yield
                         extra_gain_pts = (yield_diff / 100) * t_rem * (curr_K2 - curr_K1)
                         
+                        # Extra gain if we move to cash:
+                        cash_yield_diff = CASH_YIELD - curr_yield
+                        cash_extra_gain_pts = (cash_yield_diff / 100) * t_rem * (curr_K2 - curr_K1)
+                        
                         # Decide: Roll, Hold, or Sell to Cash
-                        if date == '20260309' and code == 'IO':
-                            print(f"DEBUG {date} {code}: best_yield={best_yield:.2f} curr_yield={curr_yield:.2f} friction={total_friction:.2f} extra_gain_pts={extra_gain_pts:.2f}")
-
-                        if best_yield < CASH_YIELD - 0.2:
-                            # Yields across the board are bad, move to cash
+                        if cash_yield_diff > 0.5 and cash_extra_gain_pts > cost_to_exit * 1.2:
+                            # Yield advantage of cash beats the exit cost (plus small buffer)
                             positions[code]['cash_balance'] += (curr_box_sell - 4 * FEE_PER_CONTRACT)
                             positions[code]['type'] = 'CASH'
-                            positions[code]['width'] = (curr_K2 - curr_K1) # Keep width for capital proxy
+                            positions[code]['width'] = (curr_K2 - curr_K1)
                             action = 'SELL->CASH'
                         elif yield_diff > 1.0 and extra_gain_pts > total_friction * 1.5: # 1.5x coverage buffer
                             # Roll: Sell current, buy best
