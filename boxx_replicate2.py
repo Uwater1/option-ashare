@@ -28,6 +28,7 @@ def get_box_spread_candidates(df):
         c = df_c[K]
         p = df_p[K]
         
+        # bprice is bid, sprice is ask based on data format
         c_b, c_s = c['bprice'], c['sprice']
         p_b, p_s = p['bprice'], p['sprice']
         
@@ -118,8 +119,9 @@ def main():
                 tickers_today.append(ticker)
 
         # Process each book
-        # We process all tickers that have ever been seen, to handle missing data/liquidity
-        for ticker in sorted(books.keys() if books else tickers_today):
+        # Fix: Use union of existing books and today's tickers to ensure new tickers are not ignored.
+        all_tickers = sorted(set(books.keys()) | set(tickers_today))
+        for ticker in all_tickers:
             if ticker not in books:
                 books[ticker] = {'pos': None, 'cash': 0.0, 'expected_gain': 0.0, 'history': []}
             
@@ -139,10 +141,10 @@ def main():
 
             if curr_pos is None:
                 # In Cash
-                if best_key and best_alpha_entry > books[ticker]['expected_gain'] + 0.01:
+                if best_key and best_alpha_entry > 0.01:
                     books[ticker]['pos'] = best_key
                     books[ticker]['cash'] -= (candidates[best_key]['box_buy'] + 4 * FEE_PER_CONTRACT)
-                    books[ticker]['expected_gain'] = best_alpha_entry
+                    books[ticker]['expected_gain'] += best_alpha_entry
                     action = f"OPEN {best_key[0]}-{best_key[1]}"
             else:
                 # Holding a box
@@ -167,9 +169,12 @@ def main():
                     else:
                         # Check for switch
                         # Terminal Value difference if we switch:
-                        # (Sell_Price - Buy_Price_New - Fees) * (1 + r*t) + Width_New - Width_Old
-                        t = vals_curr['dte'] / 365.0
-                        extra_alpha = (vals_curr['box_sell'] - candidates[best_key]['box_buy'] - 8 * FEE_PER_CONTRACT) * (1 + (CASH_YIELD/100.0) * t) + (candidates[best_key]['width'] - vals_curr['width'])
+                        # Fix: Use correct DTE for current and new box to account for timing differences.
+                        t_curr = vals_curr['dte'] / 365.0
+                        t_new  = candidates[best_key]['dte'] / 365.0
+                        extra_alpha = (vals_curr['box_sell'] - 4 * FEE_PER_CONTRACT) * (1 + (CASH_YIELD/100.0) * t_curr) \
+                                    - (candidates[best_key]['box_buy'] + 4 * FEE_PER_CONTRACT) * (1 + (CASH_YIELD/100.0) * t_new) \
+                                    + candidates[best_key]['width'] - vals_curr['width']
                         
                         if extra_alpha > 0.05: # Threshold for switching
                             books[ticker]['cash'] += (vals_curr['box_sell'] - 4 * FEE_PER_CONTRACT)
