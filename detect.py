@@ -321,13 +321,13 @@ def detect_calendar_arbitrage(df: pd.DataFrame, results: List[Dict]):
                     # Sell Near Call, Buy Far Call | Buy Near Future, Sell Far Future
                     # Profit = (C_near - C_far) + (F_far - F_near)
                     profit = (near_sell - far_buy) + (F_far - F_near)
-                    strategy_label = 'Time Call Arb'
+                    strategy_label = 'Cal. Call Arb'
                     detail_legs = f"BuyF:{F_near:.1f}, SellF:{F_far:.1f}"
                 else: # otype == 'P'
                     # Sell Near Put, Buy Far Put | Sell Near Future, Buy Far Future
                     # Profit = (P_near - P_far) + (F_near - F_far)
                     profit = (near_sell - far_buy) + (F_near - F_far)
-                    strategy_label = 'Time Put Arb'
+                    strategy_label = 'Cal. Put Arb'
                     detail_legs = f"SellF:{F_near:.1f}, BuyF:{F_far:.1f}"
 
                 if profit > 1.0:
@@ -342,7 +342,7 @@ def detect_calendar_arbitrage(df: pd.DataFrame, results: List[Dict]):
                             'Strategy': strategy_label, 
                             'Cost': round(far_buy - near_sell, 2),
                             'BorrowCost': 0,
-                            'Details': f"{otype} K:{strike} DTE:{int(near['days_to_expire'])}v{int(far['days_to_expire'])} | {detail_legs} | OptSpread:{near_sell - far_buy:.2f}",
+                            'Details': f"{otype} K:{strike} DTE:{int(near['days_to_expire'])}v{int(far['days_to_expire'])} | {detail_legs} | BuyFar@{far_buy:.2f} SellNear@{near_sell:.2f}",
                             'Profit': round(profit, 2), 'Margin': round(capital, 2), 'Ann. Return': ann_ret, 'underlying': und
                         })
 
@@ -415,15 +415,14 @@ def main():
         
         print(f"\n### {und_full_name} Arbitrage Opportunities (Ann. Return >= 5%, Sorted by Profit)")
         
-        header = ["Strategy", "Cost", "Borrow", "Profit", "Margin", "Ann. Return", "Details"]
-        col_widths = [12, 8, 8, 8, 8, 11, 70]
+        header = ["Strategy", "Cost", "Profit", "Margin", "Ann. R%", "Details"]
+        col_widths = [12, 7, 7, 7, 7, 90]
         
         def format_row(row):
             ann_ret_str = f"{row['Ann. Return']*100:.2f}%" if isinstance(row['Ann. Return'], float) else str(row['Ann. Return'])
             data = [
                 row['Strategy'], 
                 row.get('Cost', '-'), 
-                row.get('BorrowCost', 0), 
                 row['Profit'], 
                 row['Margin'], 
                 ann_ret_str, 
