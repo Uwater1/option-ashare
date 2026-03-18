@@ -74,18 +74,13 @@ def get_box_spread_candidates(df):
             }
     return results
 
-def calculate_net_gain(price, width, dte, yield_rate, side='long'):
+def calculate_net_gain(price, width, dte, yield_rate):
     """
     Expected net gain at maturity relative to holding cash.
     - Long: Width - Cost * (1 + r * t)
-    - Short: Credit * (1 + r * t) - Width
-    Note: price is cost for long, credit for short.
     """
     t = dte / 365.0
-    if side == 'long':
-        return width - price * (1 + (yield_rate / 100.0) * t)
-    else:  # short
-        return price * (1 + (yield_rate / 100.0) * t) - width
+    return width - price * (1 + (yield_rate / 100.0) * t)
 
 def main():
     # Find all available dates
@@ -95,7 +90,7 @@ def main():
     # Book structure: {ticker: {'pos': (K1, K2) or None, 'cash': float, 'expected_gain': float, 'history': list}}
     books = {}
     
-    print(f"Box Spread Replicator 2 - Multi-Book Strategy")
+    print(f"Box Spread Replicator 2 - Multi-Book Strategy (Long Only)")
     print(f"Start: {START_DATE} | Cash Yield: {CASH_YIELD}% | Fee: {FEE_PER_CONTRACT}")
     print("-" * 110)
     
@@ -124,7 +119,6 @@ def main():
                 tickers_today.append(ticker)
 
         # Process each book
-        # Fix: Use union of existing books and today's tickers to ensure new tickers are not ignored.
         all_tickers = sorted(set(books.keys()) | set(tickers_today))
         for ticker in all_tickers:
             if ticker not in books:
@@ -134,81 +128,52 @@ def main():
             action = "HOLD"
             curr_pos = books[ticker]['pos']
             
-            # Find the best entry candidate today (can be LONG or SHORT)
-            best_key = None # (K1, K2, side)
+            # Find the best entry candidate today (LONG only)
+            best_key = None # (K1, K2)
             best_alpha_entry = -np.inf
             for k, v in candidates.items():
-                # Potential LONG
-                alpha_l = calculate_net_gain(v['box_buy'] + 4 * FEE_PER_CONTRACT, v['width'], v['dte'], CASH_YIELD, 'long')
+                alpha_l = calculate_net_gain(v['box_buy'] + 4 * FEE_PER_CONTRACT, v['width'], v['dte'], CASH_YIELD)
                 if alpha_l > best_alpha_entry:
                     best_alpha_entry = alpha_l
-                    best_key = (k[0], k[1], 'LONG')
-                
-                # Potential SHORT
-                alpha_s = calculate_net_gain(v['box_sell'] - 4 * FEE_PER_CONTRACT, v['width'], v['dte'], CASH_YIELD, 'short')
-                if alpha_s > best_alpha_entry:
-                    best_alpha_entry = alpha_s
-                    best_key = (k[0], k[1], 'SHORT')
+                    best_key = k
 
             if curr_pos is None:
                 # In Cash
                 if best_key and best_alpha_entry > 0.01:
-                    K1, K2, side = best_key
+                    K1, K2 = best_key
                     books[ticker]['pos'] = best_key
-                    if side == 'LONG':
-                        books[ticker]['cash'] -= (candidates[(K1, K2)]['box_buy'] + 4 * FEE_PER_CONTRACT)
-                    else:
-                        books[ticker]['cash'] += (candidates[(K1, K2)]['box_sell'] - 4 * FEE_PER_CONTRACT)
+                    books[ticker]['cash'] -= (candidates[(K1, K2)]['box_buy'] + 4 * FEE_PER_CONTRACT)
                     books[ticker]['expected_gain'] += best_alpha_entry
-                    action = f"OPEN {side} {K1}-{K2}"
+                    action = f"OPEN LONG {K1}-{K2}"
             else:
                 # Holding a box
-                curr_k1, curr_k2, curr_side = curr_pos
+                curr_k1, curr_k2 = curr_pos
                 if (curr_k1, curr_k2) in candidates:
                     vals_curr = candidates[(curr_k1, curr_k2)]
                     if vals_curr['dte'] <= 0:
                         # Settle
-                        if curr_side == 'LONG':
-                            books[ticker]['cash'] += (curr_k2 - curr_k1)
-                        else:
-                            books[ticker]['cash'] -= (curr_k2 - curr_k1)
+                        books[ticker]['cash'] += (curr_k2 - curr_k1)
                         books[ticker]['pos'] = None
                         action = "SETTLE"
                         # After settlement, check for new entry
                         if best_key and best_alpha_entry > 0:
-                            K1, K2, side = best_key
+                            K1, K2 = best_key
                             books[ticker]['pos'] = best_key
-                            if side == 'LONG':
-                                books[ticker]['cash'] -= (candidates[(K1, K2)]['box_buy'] + 4 * FEE_PER_CONTRACT)
-                            else:
-                                books[ticker]['cash'] += (candidates[(K1, K2)]['box_sell'] - 4 * FEE_PER_CONTRACT)
+                            books[ticker]['cash'] -= (candidates[(K1, K2)]['box_buy'] + 4 * FEE_PER_CONTRACT)
                             books[ticker]['expected_gain'] += best_alpha_entry
-                            action += f" / OPEN {side} {K1}-{K2}"
+                            action += f" / OPEN LONG {K1}-{K2}"
                     else:
                         # Check for switch
-                        # Current Terminal Value Rel to Cash:
-                        if curr_side == 'LONG':
-                            val_exit = (vals_curr['box_sell'] - 4 * FEE_PER_CONTRACT)
-                        else:
-                            val_exit = -(vals_curr['box_buy'] + 4 * FEE_PER_CONTRACT)
+                        val_exit = (vals_curr['box_sell'] - 4 * FEE_PER_CONTRACT)
                         
                         t_curr = vals_curr['dte'] / 365.0
-                        t_new  = candidates[(best_key[0], best_key[1])]['dte'] / 365.0
+                        t_new  = candidates[best_key]['dte'] / 365.0
                         
-                        # extra_alpha = (Value realized from exit) * (1+rt) + (Value of new position) - (Width diff if applicable)
-                        # More simply: Terminal value if we switch - Terminal value if we hold
-                        # TV(Hold) = Width (if Long) or -Width (if Short)
-                        # TV(Switch) = val_exit * (1+r*t_curr) + TV(New Position)
+                        tv_hold = (curr_k2 - curr_k1)
                         
-                        tv_hold = (curr_k2 - curr_k1) if curr_side == 'LONG' else -(curr_k2 - curr_k1)
-                        
-                        K1_n, K2_n, side_n = best_key
-                        if side_n == 'LONG':
-                            cost_n = candidates[(K1_n, K2_n)]['box_buy'] + 4 * FEE_PER_CONTRACT
-                            tv_switch = val_exit * (1 + (CASH_YIELD/100.0) * t_curr) - cost_n * (1 + (CASH_YIELD/100.0) * t_new) + (K2_n - K1_n)
-                        else:
-                            credit_n = candidates[(K1_n, K2_n)]['box_sell'] - 4 * FEE_PER_CONTRACT
-                            tv_switch = val_exit * (1 + (CASH_YIELD/100.0) * t_curr) + credit_n * (1 + (CASH_YIELD/100.0) * t_new) - (K2_n - K1_n)
+                        K1_n, K2_n = best_key
+                        cost_n = candidates[(K1_n, K2_n)]['box_buy'] + 4 * FEE_PER_CONTRACT
+                        tv_switch = val_exit * (1 + (CASH_YIELD/100.0) * t_curr) - cost_n * (1 + (CASH_YIELD/100.0) * t_new) + (K2_n - K1_n)
                         
                         extra_alpha = tv_switch - tv_hold
                         
@@ -217,12 +182,9 @@ def main():
                             books[ticker]['cash'] += val_exit
                             # Enter new
                             books[ticker]['pos'] = best_key
-                            if side_n == 'LONG':
-                                books[ticker]['cash'] -= (candidates[(K1_n, K2_n)]['box_buy'] + 4 * FEE_PER_CONTRACT)
-                            else:
-                                books[ticker]['cash'] += (candidates[(K1_n, K2_n)]['box_sell'] - 4 * FEE_PER_CONTRACT)
+                            books[ticker]['cash'] -= (candidates[(K1_n, K2_n)]['box_buy'] + 4 * FEE_PER_CONTRACT)
                             books[ticker]['expected_gain'] += extra_alpha
-                            action = f"SWITCH {curr_side} {curr_k1}-{curr_k2} -> {side_n} {K1_n}-{K2_n}"
+                            action = f"SWITCH LONG {curr_k1}-{curr_k2} -> {K1_n}-{K2_n}"
                 else:
                     action = "HOLD (ILLIQ)"
             
@@ -231,20 +193,16 @@ def main():
             width = 0
             dte = 0
             ann_yield = 0
-            if curr_pos and (curr_pos[0], curr_pos[1]) in candidates:
-                vals = candidates[(curr_pos[0], curr_pos[1])]
+            if curr_pos and curr_pos in candidates:
+                vals = candidates[curr_pos]
                 width = vals['width']
                 dte = vals['dte']
-                if curr_pos[2] == 'LONG':
-                    ann_yield = -np.log(vals['box_buy']/width) / (dte/365.0) * 100 if dte > 0 and vals['box_buy'] > 0 else 0
-                else:
-                    # For short box, we receive credit and pay width. Yield = ln(Credit/Width) / t
-                    ann_yield = np.log(vals['box_sell']/width) / (dte/365.0) * 100 if dte > 0 and width > 0 else 0
+                ann_yield = -np.log(vals['box_buy']/width) / (dte/365.0) * 100 if dte > 0 and vals['box_buy'] > 0 else 0
             
             books[ticker]['history'].append({
                 'Date': date,
                 'Ticker': ticker,
-                'Pos': f"{curr_pos[2]} {curr_pos[0]}-{curr_pos[1]}" if curr_pos else "CASH",
+                'Pos': f"LONG {curr_pos[0]}-{curr_pos[1]}" if curr_pos else "CASH",
                 'DTE': dte,
                 'Width': width,
                 'ExpNetGainMaturity': round(books[ticker]['expected_gain'], 2),

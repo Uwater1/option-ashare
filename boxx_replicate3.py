@@ -81,16 +81,13 @@ def get_box_spread_candidates(df):
             }
     return results
 
-def calculate_alpha(price, width, dte, yield_rate, side='long'):
+def calculate_alpha(price, width, dte, yield_rate):
     """
     Expected excess gain at maturity relative to holding cash.
     """
     if dte <= 0: return -1000.0
     t = dte / 365.0
-    if side == 'long':
-        return width - price * (1 + (yield_rate / 100.0) * t)
-    else:  # short
-        return price * (1 + (yield_rate / 100.0) * t) - width
+    return width - price * (1 + (yield_rate / 100.0) * t)
 
 def get_ticker_from_filename(f):
     bn = os.path.basename(f)
@@ -133,12 +130,12 @@ def main():
     pid_to_ticker = {i + 1: ticker for i, ticker in enumerate(sorted_tickers)}
     
     # Initialize portfolios: one per unique ticker
-    portfolios = {pid: {'cash': INITIAL_CAPITAL, 'long_pos': None, 'short_pos': None, 'last_date': None, 'expected_gain': 0.0} 
+    portfolios = {pid: {'cash': INITIAL_CAPITAL, 'long_pos': None, 'last_date': None, 'expected_gain': 0.0} 
                   for pid in pid_to_ticker.keys()}
     
     all_results = []
     
-    print(f"Box Spread Replicator v3.2 - Stable Ticker-to-Portfolio Mapping")
+    print(f"Box Spread Replicator v3.2 - Long Only (Stable Ticker-to-Portfolio Mapping)")
     print(f"Start: {START_DATE} | Initial Capital: {INITIAL_CAPITAL} | Yield: {CASH_YIELD}%")
     print("-" * 80)
     
@@ -187,14 +184,10 @@ def main():
             
             # 2. Strategy Detection
             best_long, best_long_alpha = None, -1000.0
-            best_short, best_short_alpha = None, -1000.0
             for k, v in candidates.items():
-                l_alpha = calculate_alpha(v['box_buy'] + 4 * FEE_PER_CONTRACT, v['width'], v['dte'], CASH_YIELD, 'long')
+                l_alpha = calculate_alpha(v['box_buy'] + 4 * FEE_PER_CONTRACT, v['width'], v['dte'], CASH_YIELD)
                 if l_alpha > best_long_alpha:
                     best_long_alpha, best_long = l_alpha, k
-                s_alpha = calculate_alpha(v['box_sell'] - 4 * FEE_PER_CONTRACT, v['width'], v['dte'], CASH_YIELD, 'short')
-                if s_alpha > best_short_alpha:
-                    best_short_alpha, best_short = s_alpha, k
             
             action = "HOLD"
             # 3. Settlement
@@ -206,14 +199,6 @@ def main():
                     p['cash'] += qty * w
                     p['long_pos'] = None
                     action = "SETTLE"
-            
-            if p['short_pos']:
-                kl, kr, qty = p['short_pos']
-                if (kl, kr) not in candidates or curr_day_dte <= 1:
-                    w = candidates.get((kl, kr), {'width': kr-kl})['width']
-                    p['cash'] -= qty * w
-                    p['short_pos'] = None
-                    action = "SETTLE" if action == "HOLD" else action + " & SETTLE"
 
             # 4. Trading Logic
             # LONG TRADE
@@ -246,31 +231,6 @@ def main():
                                 p['expected_gain'] += (alpha_switch - alpha_hold)
                                 action = "SWITCH LONG" if action == "HOLD" else action + " / SWITCH LONG"
 
-            # SHORT TRADE
-            if best_short:
-                vals_s = candidates[best_short]
-                if p['short_pos'] is None:
-                    if best_short_alpha > 0.05:
-                        qty_s = INITIAL_CAPITAL / vals_s['width']
-                        p['cash'] += qty_s * (vals_s['box_sell'] - 4 * FEE_PER_CONTRACT)
-                        p['short_pos'] = (best_short[0], best_short[1], qty_s)
-                        p['expected_gain'] += best_short_alpha * qty_s
-                        action = "OPEN SHORT" if action == "HOLD" else action + " / OPEN SHORT"
-                else:
-                    curr_k = (p['short_pos'][0], p['short_pos'][1])
-                    v_curr = candidates.get(curr_k)
-                    if v_curr:
-                        alpha_hold = ((v_curr['box_buy'] + 4 * FEE_PER_CONTRACT) * (1 + (CASH_YIELD/100.0) * (v_curr['dte']/365.0)) - v_curr['width']) * p['short_pos'][2]
-                        cost_to_exit = p['short_pos'][2] * (v_curr['box_buy'] + 4 * FEE_PER_CONTRACT)
-                        qty_new = INITIAL_CAPITAL / vals_s['width']
-                        alpha_switch = best_short_alpha * qty_new
-                        if alpha_switch > alpha_hold + SWITCH_THRESHOLD:
-                            p['cash'] -= cost_to_exit
-                            p['cash'] += qty_new * (vals_s['box_sell'] - 4 * FEE_PER_CONTRACT)
-                            p['short_pos'] = (best_short[0], best_short[1], qty_new)
-                            p['expected_gain'] += (alpha_switch - alpha_hold)
-                            action = "SWITCH SHORT" if action == "HOLD" else action + " / SWITCH SHORT"
-
             # 5. Reporting Metrics
             nav = p['cash']
             holding_str, width, ann_yield = "CASH", 0, 0
@@ -284,17 +244,9 @@ def main():
                 width = v['width']
                 holding_str = f"Long {kl}-{kr} ({qty_l:.2f})"
                 ann_yield = -np.log(v['box_buy']/width) / (dte/365.0) * 100 if dte > 0 and v['box_buy'] > 0 else 0
-            if p['short_pos']:
-                kl, kr, qty_s = p['short_pos']
-                v = candidates.get((kl, kr), {'box_buy': kr-kl, 'box_sell': kr-kl, 'dte': dte, 'width': kr-kl})
-                nav -= qty_s * v['box_buy']
-                width = v['width']
-                holding_str = f"Short {kl}-{kr} ({qty_s:.2f}) & " + holding_str
-                ay_s = np.log(v['box_sell']/width) / (dte/365.0) * 100 if dte > 0 else 0
-                ann_yield = (ann_yield + ay_s) / 2 if ann_yield != 0 else ay_s
             
             # Only report if ticker was active on this day (curr_day_dte > 0) or if we have a position
-            if curr_day_dte > 0 or p['long_pos'] or p['short_pos']:
+            if curr_day_dte > 0 or p['long_pos']:
                 all_results.append({
                     'Date': date, 'PortfolioId': pid, 'Ticker': ticker, 'Pos': holding_str,
                     'DTE': dte, 'Width': width, 'ExpNetGainMaturity': round(max(0, p['expected_gain']), 2),
