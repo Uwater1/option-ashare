@@ -25,8 +25,11 @@ jobs:
             requirements.txt
             option_data
 
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v7
+
       - name: Install dependencies
-        run: pip install yfinance numpy akshare
+        run: uv pip install --system yfinance numpy akshare
 
       - name: Run options download script
         id: download
