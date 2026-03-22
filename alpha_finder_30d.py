@@ -81,34 +81,65 @@ def get_distribution(df, bucket_size):
     
     return dist.sort_values('Bucket')
 
+def get_cdf(series, value):
+    """Returns the cumulative probability P(X <= value)."""
+    return (series <= value).mean() * 100
+
+def get_inverse_cdf(series, percentile):
+    """Returns the value x such that P(X <= x) = percentile (0.0 to 1.0)."""
+    return series.quantile(percentile)
+
 def plot_distributions(all_returns, bucket_sizes):
     """Generates histogram plots for the return distributions."""
     num_indices = len(all_returns)
     if num_indices == 0: return
     
-    fig, axes = plt.subplots(num_indices, 1, figsize=(12, 5 * num_indices))
+    fig, axes = plt.subplots(num_indices, 1, figsize=(14, 6 * num_indices))
     if num_indices == 1: axes = [axes]
     
     for i, (name, df) in enumerate(all_returns.items()):
         ax = axes[i]
         bs = bucket_sizes[name]
+        data = df['Point_Diff']
         
-        # Determine range for plotting (central 95%)
-        std = df['Point_Diff'].std()
+        # Determine range for plotting
+        std = data.std()
         plot_range = (-4*std, 4*std)
         
-        ax.hist(df['Point_Diff'], bins=np.arange(plot_range[0], plot_range[1], bs), 
-                alpha=0.7, color='steelblue', edgecolor='black')
+        # 1. Histogram (Frequency)
+        ax.hist(data, bins=np.arange(plot_range[0], plot_range[1], bs), 
+                alpha=0.5, color='steelblue', edgecolor='black', label='Frequency')
         
-        ax.axvline(0, color='red', linestyle='--', alpha=0.5)
-        ax.axvline(bs, color='green', linestyle=':', label=f'+{bs}pts')
-        ax.axvline(-bs, color='orange', linestyle=':', label=f'-{bs}pts')
+        # 2. CDF Curve (on twin axis)
+        ax2 = ax.twinx()
+        sorted_samples = np.sort(data)
+        probabilities = np.linspace(0, 1, len(sorted_samples))
+        ax2.plot(sorted_samples, probabilities, color='navy', linewidth=1, label='CDF')
+        ax2.set_ylabel("Cumulative Probability")
+        ax2.set_ylim(0, 1.05)
         
-        ax.set_title(f"30-Day Forward Point Move Distribution: {name}")
+        # 3. Inverse CDF / Quantiles (Vertical Lines)
+        p5 = get_inverse_cdf(data, 0.05)
+        p50 = get_inverse_cdf(data, 0.50)
+        p95 = get_inverse_cdf(data, 0.95)
+        
+        ax.axvline(p5, color='darkviolet', linestyle='--', linewidth=1, label=f'P5 (Inv CDF 0.05): {p5:.1f}')
+        ax.axvline(p50, color='black', linestyle='-', linewidth=1, label=f'P50 (Median): {p50:.1f}')
+        ax.axvline(p95, color='forestgreen', linestyle='--', linewidth=1, label=f'P95 (Inv CDF 0.95): {p95:.1f}')
+        
+        # Reference line at 0
+        ax.axvline(0, color='red', linestyle=':', alpha=0.5, linewidth=1.5)
+        
+        ax.set_title(f"30-Day Forward Move Distribution, CDF and Inv CDF: {name}")
         ax.set_xlabel("Point Difference")
         ax.set_ylabel("Frequency")
-        ax.legend()
-        ax.grid(axis='y', alpha=0.3)
+        ax.set_xlim(plot_range)
+        
+        # Combine legends from both axes
+        h1, l1 = ax.get_legend_handles_labels()
+        h2, l2 = ax2.get_legend_handles_labels()
+        ax.legend(h1 + h2, l1 + l2, loc='upper left', fontsize='small')
+        ax.grid(axis='both', alpha=0.2)
 
     plt.tight_layout()
     plt.savefig('alpha_30d_distribution.png')
@@ -146,9 +177,12 @@ def run_analysis():
             'Index': name,
             '30d Avg Point Move': returns_df['Point_Diff'].mean(),
             '30d Std Dev Points': returns_df['Point_Diff'].std(),
-            '30d Avg Return %': returns_df['Return_Pct'].mean() * 100,
-            f'Prob Move < -{bucket_size}pts (%)': dist[dist['Bucket'] < 0]['Probability (%)'].sum(),
-            f'Prob Move > +{bucket_size}pts (%)': dist[dist['Bucket'] >= 1]['Probability (%)'].sum()
+            'P(Neg Move) %': get_cdf(returns_df['Point_Diff'], 0),
+            'P5 % (pts)': get_inverse_cdf(returns_df['Point_Diff'], 0.05),
+            'P50 % (Median pts)': get_inverse_cdf(returns_df['Point_Diff'], 0.50),
+            'P95 % (pts)': get_inverse_cdf(returns_df['Point_Diff'], 0.95),
+            f'Prob < -{bucket_size}pts (%)': dist[dist['Bucket'] < 0]['Probability (%)'].sum(),
+            f'Prob > +{bucket_size}pts (%)': dist[dist['Bucket'] >= 1]['Probability (%)'].sum()
         })
 
     summary_df = pd.DataFrame(summary_stats)

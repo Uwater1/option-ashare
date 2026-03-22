@@ -2,3 +2,5 @@ akshare
 pytz
 yfinance
 pandas
+matplotlib
+scipy
