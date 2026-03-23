@@ -170,8 +170,9 @@ def main():
         cost    = ask_11 * ask_22
         revenue = bid_12 * bid_21
         delta   = revenue - cost
+        score = delta / cost
 
-        valid = (delta > 0) & ~np.isnan(delta) & (cost > 0)
+        valid = (delta > 1) & ~np.isnan(delta) & (cost > 0) & (score > 0.05)
 
         for idx in np.where(valid)[0]:
             k1 = strikes[k1_flat[idx]]
@@ -181,7 +182,7 @@ def main():
 
             val_delta = delta[idx]
             val_cost  = cost[idx]
-            norm_score = val_delta / val_cost if val_cost > 0 else 0
+            norm_score = score[idx]
 
             results.append({
                 'Underlying':       und,
@@ -191,6 +192,7 @@ def main():
                 'T1':               int(t1),
                 'T2':               int(t2),
                 'Delta':            val_delta,
+                'Cost':             val_cost,
                 'Normalized Score': norm_score,
                 'Details': (
                     f"Buy  (K={k1},T={int(t1)})@{ask_11[idx]:.4f}"
@@ -209,26 +211,26 @@ def main():
     res_df.sort_values('Delta', ascending=False, inplace=True)
 
     print(f"Found {len(res_df)} TP2 violations.")
-    print(f"(Prices carry-adjusted with r-q = {carry:.2%} p.a.)\n")
     print("Top Violations by Delta:")
 
     header_fmt = (
         f"{'Underlying':<12} {'Type':<6} {'K1':<10} {'K2':<10}"
-        f" {'T1':<6} {'T2':<6} {'Delta':<15} {'Normalized Score':<18}"
+        f" {'T1':<6} {'T2':<6} {'Delta':<15} {'Cost':<15} {'Normalized Score':<18}"
     )
     print("\n" + header_fmt)
-    print("-" * 120)
+    print("-" * 130)
 
     for _, row in res_df.iterrows():
         line1 = (
             f"{str(row['Underlying']):<12} {str(row['Type']):<6}"
             f" {row['K1']:<10} {row['K2']:<10}"
             f" {int(row['T1']):<6} {int(row['T2']):<6}"
-            f" {row['Delta']:<15.6f} {row['Normalized Score']:<18.6f}"
+            f" {row['Delta']:<15.2f} {row['Cost']:<15.2f}"
+            f" {row['Normalized Score']:<18.6f}"
         )
         print(line1)
         print(f"{row['Details']}")
-        print("-" * 120)
+        print("-" * 130)
 
 
 if __name__ == '__main__':
