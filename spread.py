@@ -10,7 +10,7 @@ import math
 from numba import njit
 
 # Constants
-R = 0.02 # Risk-free rate
+R = 0.02  # Risk-free rate
 
 @njit(cache=True)
 def cdf_jit(x):
@@ -52,38 +52,82 @@ def extract_ticker_prefix(ticker):
     match = re.match(r'([A-Za-z]+)', str(ticker))
     return match.group(1) if match else 'UNK'
 
+def _dte_bucket_code(days_to_expire):
+    """Map days_to_expire to integer bucket code matching training order."""
+    if days_to_expire <= 7:
+        return 0   # 'near'
+    elif days_to_expire <= 30:
+        return 1   # 'short'
+    elif days_to_expire <= 90:
+        return 2   # 'medium'
+    else:
+        return 3   # 'far'
+
 def predict_spread(midprice, ticker, option_type, strike, days_to_expire, future_price):
-    if not os.path.exists('spread_model.txt'): return None
+    if not os.path.exists('spread_model.txt'):
+        return None
     model = lgb.Booster(model_file='spread_model.txt')
     with open('model_categories.json', 'r') as f:
         categories = json.load(f)
-    
+
     ticker_prefix = extract_ticker_prefix(ticker)
     T = days_to_expire / 365.0
     is_call = (option_type == 'C')
     iv = find_iv_jit(midprice, future_price, strike, T, R, is_call)
-    
+
     ticker_code = categories['tickers'].index(ticker_prefix) if ticker_prefix in categories['tickers'] else -1
-    type_code = categories['types'].index(option_type) if option_type in categories['types'] else -1
+    type_code   = categories['types'].index(option_type)     if option_type   in categories['types']   else -1
 
     log_moneyness = math.log(future_price / strike)
-    sqrt_dte = math.sqrt(T)
-    data = [[midprice, strike, days_to_expire, future_price, log_moneyness, iv, 
-             log_moneyness * sqrt_dte, sqrt_dte, 1.0/(T+1e-6), ticker_code, type_code]]
-    
-    predicted_spread = model.predict(data)[0]
-    return predicted_spread, midprice - predicted_spread/2, midprice + predicted_spread/2
+    sqrt_dte      = math.sqrt(T)
+    otm_depth     = abs(log_moneyness)
+    is_atm        = int(otm_depth < 0.02)
+    iv_x_sqrt_dte = iv * sqrt_dte
+    dte_bucket    = _dte_bucket_code(days_to_expire)
+
+    data = [[
+        midprice,             # midprice
+        strike,               # strike
+        days_to_expire,       # days_to_expire
+        future_price,         # S
+        log_moneyness,        # log_moneyness
+        iv,                   # iv
+        log_moneyness * sqrt_dte,  # log_moneyness_x_sqrt_dte
+        sqrt_dte,             # sqrt_dte
+        1.0 / (T + 1e-6),    # inv_dte
+        otm_depth,            # otm_depth
+        iv_x_sqrt_dte,        # iv_x_sqrt_dte
+        is_atm,               # is_atm
+        ticker_code,          # ticker_cat
+        type_code,            # type_cat
+        dte_bucket,           # dte_bucket
+    ]]
+
+    # Model predicts log(1 + spread); reverse-transform
+    log_pred = model.predict(data)[0]
+    predicted_spread = math.expm1(log_pred)
+    predicted_spread = max(0.0, predicted_spread)
+
+    return predicted_spread, midprice - predicted_spread / 2, midprice + predicted_spread / 2
 
 def main():
-    if len(sys.argv) < 7: return
+    if len(sys.argv) < 7:
+        print("Usage: spread.py <midprice> <ticker> <type> <strike> <days_to_expire> <future_price>")
+        return
     try:
-        mid, tick, typ, strik, dte, fut = float(sys.argv[1]), sys.argv[2], sys.argv[3], float(sys.argv[4]), float(sys.argv[5]), float(sys.argv[6])
+        mid   = float(sys.argv[1])
+        tick  = sys.argv[2]
+        typ   = sys.argv[3]
+        strik = float(sys.argv[4])
+        dte   = float(sys.argv[5])
+        fut   = float(sys.argv[6])
+
         res = predict_spread(mid, tick, typ, strik, dte, fut)
         if res:
             spread, bprice, sprice = res
-            print(f" Predicted Spread: {spread:>10.4f}")
-            print(f" Bid Price (bprice): {bprice:>10.4f}")
-            print(f" Ask Price (sprice): {sprice:>10.4f}")
+            print(f" Predicted Spread : {spread:>10.4f}")
+            print(f" Bid Price        : {bprice:>10.4f}")
+            print(f" Ask Price        : {sprice:>10.4f}")
     except Exception as e:
         print(f"Error: {e}")
 

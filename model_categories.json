@@ -1,1 +1,1 @@
-{"tickers": ["HO", "IO", "MO"], "types": ["C", "P"]}
+{"tickers": ["HO", "IO", "MO"], "types": ["C", "P"], "dte_buckets": ["near", "short", "medium", "far"]}
