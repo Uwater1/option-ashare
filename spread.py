@@ -109,7 +109,7 @@ def predict_spread(midprice, ticker, option_type, strike, days_to_expire, future
     predicted_spread = predicted_spread_pct * midprice
     predicted_spread = max(0.0, predicted_spread)
 
-    return predicted_spread, midprice - predicted_spread / 2, midprice + predicted_spread / 2
+    return predicted_spread, midprice - predicted_spread / 2, midprice + predicted_spread / 2, predicted_spread_pct
 
 def main():
     if len(sys.argv) < 7:
@@ -125,8 +125,9 @@ def main():
 
         res = predict_spread(mid, tick, typ, strik, dte, fut)
         if res:
-            spread, bprice, sprice = res
+            spread, bprice, sprice, spread_pct = res
             print(f" Predicted Spread : {spread:>10.4f}")
+            print(f" Spread (%)       : {spread_pct*100:>10.4f}%")
             print(f" Bid Price        : {bprice:>10.4f}")
             print(f" Ask Price        : {sprice:>10.4f}")
     except Exception as e:
