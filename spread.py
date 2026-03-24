@@ -103,9 +103,10 @@ def predict_spread(midprice, ticker, option_type, strike, days_to_expire, future
         dte_bucket,           # dte_bucket
     ]]
 
-    # Model predicts log(1 + spread); reverse-transform
+    # Model predicts log(spread_pct); reverse-transform
     log_pred = model.predict(data)[0]
-    predicted_spread = math.expm1(log_pred)
+    predicted_spread_pct = math.exp(log_pred)
+    predicted_spread = predicted_spread_pct * midprice
     predicted_spread = max(0.0, predicted_spread)
 
     return predicted_spread, midprice - predicted_spread / 2, midprice + predicted_spread / 2

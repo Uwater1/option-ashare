@@ -164,8 +164,9 @@ def preprocess(df):
     df['ticker_cat'] = df['ticker_prefix'].astype('category')
     df['type_cat'] = df['type'].astype('category')
 
-    # ── LOG-TRANSFORM target ─────────────────────────────────────────────────
-    df['log_spread'] = np.log1p(df['spread'])
+    # ── TARGET: spread percentage (log-transformed) ──────────────────────────
+    # We use log(spread_pct) because spreads vary over orders of magnitude.
+    df['target'] = np.log(df['spread_pct'].clip(lower=1e-9))
 
     return df
 
@@ -218,7 +219,7 @@ def train():
     ]
 
     X = df[features]
-    y = df['log_spread']        # ← predict log(1 + spread)
+    y = df['target']             # ← predict log(spread_pct)
     dates = df['_date']
 
     # ── Date-based train/test split (no temporal leakage) ───────────────────
@@ -269,36 +270,43 @@ def train():
         callbacks=[lgb.early_stopping(50, verbose=False), lgb.log_evaluation(-1)]
     )
 
-    # ── Evaluation (back-transform predictions) ──────────────────────────────
+    # ── Evaluation ───────────────────────────────────────────────────────────
     log_pred = model.predict(X_test)
-    y_pred   = np.expm1(log_pred)                  # predicted spread
-    y_true   = np.expm1(y_test.values)             # actual spread
+    pred_pct = np.nan_to_num(np.exp(log_pred), nan=0.0)
+    true_pct = df.loc[test_mask, 'spread_pct'].values
 
-    rmse  = np.sqrt(mean_squared_error(y_true, y_pred))
-    mae   = mean_absolute_error(y_true, y_pred)
-    r2    = r2_score(y_true, y_pred)
-    huber = huber_loss_calc(y_true, y_pred)
-    # MAPE – guard against zero actuals
-    nonzero = y_true > 0
-    mape = np.mean(np.abs((y_true[nonzero] - y_pred[nonzero]) / y_true[nonzero])) * 100
+    # Absolute units (for backward compatibility / intuition)
+    test_mids = X_test['midprice'].values
+    y_pred_abs = pred_pct * test_mids
+    y_true_abs = df.loc[test_mask, 'spread'].values
 
-    # Residual percentile table
-    residuals = np.abs(y_true - y_pred)
+    # Primary Metrics (Percentage)
+    rmse_pct = np.sqrt(mean_squared_error(true_pct, pred_pct))
+    mae_pct  = mean_absolute_error(true_pct, pred_pct)
+    r2       = r2_score(true_pct, pred_pct)
+    
+    # Secondary Metrics (Absolute Value)
+    rmse_abs = np.sqrt(mean_squared_error(y_true_abs, y_pred_abs))
+    mae_abs  = mean_absolute_error(y_true_abs, y_pred_abs)
+
+    # Residual percentile table (using absolute spread for intuition)
+    residuals_abs = np.abs(y_true_abs - y_pred_abs)
     pct_labels = [25, 50, 75, 90, 99]
-    pct_values = np.percentile(residuals, pct_labels)
+    pct_values = np.percentile(residuals_abs, pct_labels)
 
     print("\n" + "=" * 38)
     print("       MODEL EVALUATION RESULTS       ")
     print("-" * 38)
-    print(f" Model : LightGBM (Huber + Optuna)")
+    print(f" Model : LightGBM (log %spread prediction)")
     print(f" Split : Date-based (80/20)")
-    print(f" RMSE  : {rmse:.6f}")
-    print(f" MAE   : {mae:.6f}")
-    print(f" MAPE  : {mape:.2f}%")
-    print(f" R²    : {r2:.6f}")
-    print(f" Huber : {huber:.6f}")
+    print(f" RMSE (%) : {rmse_pct:.6f}")
+    print(f" MAE  (%) : {mae_pct:.6f}")
+    print(f" R²       : {r2:.6f}")
+    print(f"")
+    print(f" RMSE (Val): {rmse_abs:.6f}")
+    print(f" MAE  (Val): {mae_abs:.6f}")
     print("-" * 38)
-    print("  |Residual| Percentiles")
+    print("  |Residual Value| Percentiles")
     for p, v in zip(pct_labels, pct_values):
         print(f"   P{p:02d} : {v:.4f}")
     print("=" * 38 + "\n")
