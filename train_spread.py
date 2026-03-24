@@ -188,7 +188,7 @@ def objective(trial, X_train, y_train, X_val, y_val):
         'min_child_samples': trial.suggest_int('min_child_samples', 5, 100),
         'learning_rate': trial.suggest_float('learning_rate', 0.005, 0.3, log=True),
         'n_estimators': 2000,
-        'early_stopping_round': 50,
+        'early_stopping_round': 100,
     }
 
     model = lgb.LGBMRegressor(**params)
