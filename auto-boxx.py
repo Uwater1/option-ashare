@@ -45,6 +45,9 @@ def main():
         if dte is None or dte <= 0:
             continue
             
+        # Get ticker base (e.g. IO2604)
+        ticker_base = df['ticker'].iloc[0] if 'ticker' in df.columns else prefix
+        
         # Filter out bad prices
         df = df[(df['bprice'] > 0) & (df['sprice'] > 0)]
         
@@ -92,9 +95,11 @@ def main():
                     
                     all_long_boxes.append({
                         'index': prefix,
+                        'ticker': ticker_base,
                         'DTE': dte,
-                        'K1': K1,
-                        'K2': K2,
+                        'K1': K1, 'K2': K2,
+                        'c1_ask': s1['c_ask'], 'c2_bid': s2['c_bid'],
+                        'p2_ask': s2['p_ask'], 'p1_bid': s1['p_bid'],
                         'cost': box_buy_cost,
                         'profit': long_profit,
                         'ret': long_ret,
@@ -112,9 +117,11 @@ def main():
                     
                     all_short_boxes.append({
                         'index': prefix,
+                        'ticker': ticker_base,
                         'DTE': dte,
-                        'K1': K1,
-                        'K2': K2,
+                        'K1': K1, 'K2': K2,
+                        'c1_bid': s1['c_bid'], 'c2_ask': s2['c_ask'],
+                        'p2_bid': s2['p_bid'], 'p1_ask': s1['p_ask'],
                         'credit': box_sell_credit,
                         'profit': short_profit,
                         'ret': short_ret,
@@ -149,24 +156,26 @@ def main():
         if not df_long_near.empty:
             for idx, row in df_long_near.iterrows():
                 print(f"[{row['index']}] K1: {row['K1']} | K2: {row['K2']} | DTE: {row['DTE']} | Cost: {row['cost']:.2f} | Payout: {row['K2'] - row['K1']:.2f} | Exp Return: {row['ret']*100:.2f}% | Ann Return: {row['ann_ret']*100:.2f}%")
+                print(f"Buy {row['ticker']}C{row['K1']}@{row['c1_ask']}; Sell {row['ticker']}C{row['K2']}@{row['c2_bid']}; Buy {row['ticker']}P{row['K2']}@{row['p2_ask']}; Sell {row['ticker']}P{row['K1']}@{row['p1_bid']}")
         else:
-            print("Cannot find any long box near.")
+            print("No qualifying long boxes found for nearest DTE.")
     else:
-        print("Cannot find any long box near.")
+        print("No long boxes found.")
     print()
         
-    # 2. Long Box Far (min_dte < DTE < 61)
-    print("--- 2. Long Box Far (Near term, DTE < 61 but > Nearest) Top 5 ---")
+    # 2. Long Box Far (min_dte < DTE < 91)
+    print("--- 2. Long Box Far (Near term, DTE < 91 but > Nearest) Top 5 ---")
     if not df_long.empty:
-        df_long_far = df_long[(df_long['DTE'] > min_dte) & (df_long['DTE'] < 61) & (df_long['ret'] >= 0.01)]
+        df_long_far = df_long[(df_long['DTE'] > min_dte) & (df_long['DTE'] < 91) & (df_long['ret'] >= 0.01)]
         df_long_far = df_long_far.sort_values(by='ann_ret', ascending=False).head(5)
         if not df_long_far.empty:
             for idx, row in df_long_far.iterrows():
                 print(f"[{row['index']}] K1: {row['K1']} | K2: {row['K2']} | DTE: {row['DTE']} | Cost: {row['cost']:.2f} | Payout: {row['K2'] - row['K1']:.2f} | Exp Return: {row['ret']*100:.2f}% | Ann Return: {row['ann_ret']*100:.2f}%")
+                print(f"Buy {row['ticker']}C{row['K1']}@{row['c1_ask']}; Sell {row['ticker']}C{row['K2']}@{row['c2_bid']}; Buy {row['ticker']}P{row['K2']}@{row['p2_ask']}; Sell {row['ticker']}P{row['K1']}@{row['p1_bid']}")
         else:
-            print("Cannot find any long box far.")
+            print("No qualifying long boxes found for far-term DTEs.")
     else:
-        print("Cannot find any long box far.")
+        print("No long boxes found.")
     print()
         
     # 3. Short Box (DTE < 61)
@@ -177,10 +186,11 @@ def main():
         if not df_short_under_60.empty:
             for idx, row in df_short_under_60.iterrows():
                 print(f"[{row['index']}] K1: {row['K1']} | K2: {row['K2']} | DTE: {row['DTE']} | Credit: {row['credit']:.2f} | Margin: {row['K2'] - row['K1']:.2f} | Exp Return: {row['ret']*100:.2f}% | Ann Return: {row['ann_ret']*100:.2f}%")
+                print(f"Sell {row['ticker']}C{row['K1']}@{row['c1_bid']}; Buy {row['ticker']}C{row['K2']}@{row['c2_ask']}; Sell {row['ticker']}P{row['K2']}@{row['p2_bid']}; Buy {row['ticker']}P{row['K1']}@{row['p1_ask']}")
         else:
-            print("Cannot find any short box.")
+            print("No qualifying short boxes found for DTE < 60.")
     else:
-        print("Cannot find any short box.")
+        print("No short boxes found.")
     print()
 
 if __name__ == '__main__':
