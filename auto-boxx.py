@@ -188,7 +188,7 @@ def main():
                 print(f"[{row['index']}] K1: {row['K1']} | K2: {row['K2']} | DTE: {row['DTE']} | Credit: {row['credit']:.2f} | Margin: {row['K2'] - row['K1']:.2f} | Exp Return: {row['ret']*100:.2f}% | Ann Return: {row['ann_ret']*100:.2f}%")
                 print(f"Sell {row['ticker']}C{row['K1']}@{row['c1_bid']}; Buy {row['ticker']}C{row['K2']}@{row['c2_ask']}; Sell {row['ticker']}P{row['K2']}@{row['p2_bid']}; Buy {row['ticker']}P{row['K1']}@{row['p1_ask']}")
         else:
-            print("No qualifying short boxes found for DTE < 60.")
+            print("No qualifying short boxes found for DTE < 61")
     else:
         print("No short boxes found.")
     print()
