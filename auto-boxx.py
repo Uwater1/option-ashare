@@ -155,10 +155,10 @@ def main():
         print("no")
     print()
         
-    # 2. Long Box Far (min_dte < DTE < 60)
-    print("--- 2. Long Box Far (Near term, DTE < 60 but > Nearest) Top 5 ---")
+    # 2. Long Box Far (min_dte < DTE < 61)
+    print("--- 2. Long Box Far (Near term, DTE < 61 but > Nearest) Top 5 ---")
     if not df_long.empty:
-        df_long_far = df_long[(df_long['DTE'] > min_dte) & (df_long['DTE'] < 60) & (df_long['ret'] >= 0.01)]
+        df_long_far = df_long[(df_long['DTE'] > min_dte) & (df_long['DTE'] < 61) & (df_long['ret'] >= 0.01)]
         df_long_far = df_long_far.sort_values(by='ann_ret', ascending=False).head(5)
         if not df_long_far.empty:
             for idx, row in df_long_far.iterrows():
