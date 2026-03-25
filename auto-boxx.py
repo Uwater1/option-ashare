@@ -169,10 +169,10 @@ def main():
         print("Cannot find any long box far.")
     print()
         
-    # 3. Short Box (DTE < 60)
-    print("--- 3. Short Box (All terms DTE < 60) Top 5 ---")
+    # 3. Short Box (DTE < 61)
+    print("--- 3. Short Box (All terms DTE < 61) Top 5 ---")
     if not df_short.empty:
-        df_short_under_60 = df_short[(df_short['DTE'] < 60) & (df_short['profit'] >= 1.0)]
+        df_short_under_60 = df_short[(df_short['DTE'] < 61) & (df_short['profit'] >= 1.0)]
         df_short_under_60 = df_short_under_60.sort_values(by='ann_ret', ascending=False).head(5)
         if not df_short_under_60.empty:
             for idx, row in df_short_under_60.iterrows():
