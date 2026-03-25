@@ -14,7 +14,7 @@ def get_ticker_prefix(filename):
 def main():
     if len(sys.argv) < 2:
         print("Usage: python auto-boxx.py <folder_path>")
-        print("Example: python auto-boxx.py option_data/20260320")
+        print("Example: python auto-boxx.py option_data/20260323")
         sys.exit(1)
         
     folder_path = sys.argv[1]
