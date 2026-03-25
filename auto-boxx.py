@@ -150,9 +150,9 @@ def main():
             for idx, row in df_long_near.iterrows():
                 print(f"[{row['index']}] K1: {row['K1']} | K2: {row['K2']} | DTE: {row['DTE']} | Cost: {row['cost']:.2f} | Payout: {row['K2'] - row['K1']:.2f} | Exp Return: {row['ret']*100:.2f}% | Ann Return: {row['ann_ret']*100:.2f}%")
         else:
-            print("no")
+            print("Cannot find any long box near.")
     else:
-        print("no")
+        print("Cannot find any long box near.")
     print()
         
     # 2. Long Box Far (min_dte < DTE < 61)
@@ -164,9 +164,9 @@ def main():
             for idx, row in df_long_far.iterrows():
                 print(f"[{row['index']}] K1: {row['K1']} | K2: {row['K2']} | DTE: {row['DTE']} | Cost: {row['cost']:.2f} | Payout: {row['K2'] - row['K1']:.2f} | Exp Return: {row['ret']*100:.2f}% | Ann Return: {row['ann_ret']*100:.2f}%")
         else:
-            print("no")
+            print("Cannot find any long box far.")
     else:
-        print("no")
+        print("Cannot find any long box far.")
     print()
         
     # 3. Short Box (DTE < 60)
@@ -178,9 +178,9 @@ def main():
             for idx, row in df_short_under_60.iterrows():
                 print(f"[{row['index']}] K1: {row['K1']} | K2: {row['K2']} | DTE: {row['DTE']} | Credit: {row['credit']:.2f} | Margin: {row['K2'] - row['K1']:.2f} | Exp Return: {row['ret']*100:.2f}% | Ann Return: {row['ann_ret']*100:.2f}%")
         else:
-            print("no")
+            print("Cannot find any short box.")
     else:
-        print("no")
+        print("Cannot find any short box.")
     print()
 
 if __name__ == '__main__':
