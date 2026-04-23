@@ -2,10 +2,8 @@ name: Retry Download
 
 on:
   schedule:
-    # Run at 21:30 Beijing Time (CST, UTC+8) is 13:30 UTC
-    - cron: '30 13 * * 1-5' 
-    # Run at 23:00 Beijing Time (CST, UTC+8) is 15:00 UTC
-    - cron: '0 15 * * 1-5' 
+    # Run at 21:40 Beijing Time (CST, UTC+8) is 13:40 UTC
+    - cron: '40 13 * * 1-5' 
 
   
   workflow_dispatch: # Allows manual trigger
